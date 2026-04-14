@@ -1,5 +1,4 @@
 {
-  "lock": false,
   "tasks": {
     "check": "deno fmt --check && deno lint && deno check **/*.ts **/*.tsx",
     "dev": "deno run -A --watch=static/,routes/ dev.ts",

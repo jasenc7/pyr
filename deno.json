@@ -2,6 +2,8 @@
   "name": "pyr",
   "version": "0.1.0",
   "exports": "./lib.ts",
+  "workspace": ["./site"],
+  "lock": false,
   "fmt": {
     "lineWidth": 100
   },

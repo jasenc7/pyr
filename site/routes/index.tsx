@@ -7,28 +7,23 @@ const WINDOWS_INSTALL_CMD = "irm https://pyrun.dev/install.ps1 | iex";
 const FEATURES = [
   {
     title: "Zero system deps",
-    body:
-      "pyr bootstraps its own CPython runtime. No brew, no apt, no pyenv. curl and you're running.",
+    body: "pyr bootstraps its own CPython runtime. No brew, no apt, no pyenv. curl and you're running.",
   },
   {
     title: "Six commands",
-    body:
-      "init, run, add, remove, sync, upgrade. That's the whole API. No activate, no pip freeze, no requirements hell.",
+    body: "init, run, add, remove, sync, upgrade. That's the whole API. No activate, no pip freeze, no requirements hell.",
   },
   {
     title: "Honest lockfile",
-    body:
-      "pyproject.toml is the source of truth. requirements.txt is a generated, fully-pinned lock. Edit either; pyr reconciles on the next run.",
+    body: "pyproject.toml is the source of truth. requirements.txt is a generated, fully-pinned lock. Edit either; pyr reconciles on the next run.",
   },
   {
     title: "Self-updating",
-    body:
-      "pyr upgrade updates the tool. pyr upgrade --python updates the runtime. Stale venvs rebuild automatically.",
+    body: "pyr upgrade updates the tool. pyr upgrade --python updates the runtime. Stale venvs rebuild automatically.",
   },
   {
     title: "Not written in Python",
-    body:
-      "The thing that manages Python shouldn't need Python to install. pyr is a single compiled binary that drives pip and the runtime it bootstraps — never the other way around.",
+    body: "The thing that manages Python shouldn't need Python to install. pyr is a single compiled binary that drives pip and the runtime it bootstraps — never the other way around.",
   },
 ];
 
@@ -39,7 +34,9 @@ export default function Home() {
       <nav class="nav">
         <span class="nav-logo">pyrun</span>
         <div class="nav-right">
-          <a class="nav-link" href="/docs">docs</a>
+          <a class="nav-link" href="/docs">
+            docs
+          </a>
           <a
             class="nav-link"
             href="https://github.com/jasenc7/pyr"
@@ -59,8 +56,8 @@ export default function Home() {
           the ceremony
         </h1>
         <p>
-          A project manager that bootstraps its own runtime, manages your venv, and gets out of the
-          way. Six commands. One honest lockfile.
+          A project manager that bootstraps its own runtime, manages your venv,
+          and gets out of the way. Six commands. One honest lockfile.
         </p>
         <div class="install">
           <span>
@@ -79,7 +76,10 @@ export default function Home() {
           <CopyButton text={WINDOWS_INSTALL_CMD} />
         </div>
         <p class="install-os">
-          Windows · <a href="/docs#windows" class="install-os-link">manual install</a>
+          Windows ·{" "}
+          <a href="/docs#windows" class="install-os-link">
+            manual install
+          </a>
         </p>
       </section>
 
@@ -111,16 +111,26 @@ export default function Home() {
           The thing that manages Python shouldn't be Python.
         </blockquote>
         <p>
-          uv is Rust. poetry is Python — and bootstrapping it is the problem it claims to solve. pyr
-          is a single compiled binary. It drives pip and the standalone CPython runtime; it doesn't
-          depend on them to install itself.
+          uv is Rust. poetry is Python — and bootstrapping it is the problem it
+          claims to solve. pyr is a single compiled binary. It drives pip and
+          the standalone CPython runtime; it doesn't depend on them to install
+          itself.
         </p>
       </section>
 
       {/* footer */}
       <footer class="footer">
         <span>pyrun.dev</span>
-        <span>by jasencarroll</span>
+        <span>
+          <a
+            class="nav-link"
+            href="https://jasencarroll.com"
+            target="_blank"
+            rel="noopener"
+          >
+            by jasencarroll
+          </a>
+        </span>
       </footer>
     </>
   );

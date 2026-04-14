@@ -50,7 +50,7 @@ jobs:
   # binary a release would ship.
   build:
     needs: check
-    if: github.ref_type != 'tag'
+    if: github.ref_type != 'tag' && github.event_name != 'pull_request'
     strategy:
       matrix:
         include:
@@ -106,7 +106,7 @@ jobs:
   # `./pyr` invocations work uniformly across the OS matrix.
   smoke:
     needs: build
-    if: github.ref_type != 'tag'
+    if: github.ref_type != 'tag' && github.event_name != 'pull_request'
     strategy:
       matrix:
         include:

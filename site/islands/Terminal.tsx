@@ -8,8 +8,7 @@ const STEPS = [
   },
   {
     cmd: "pyr init myproject && cd myproject",
-    output:
-      "bootstrapping python...\ndownloading cpython 3.14.4...\nmyproject ready",
+    output: "bootstrapping python...\ndownloading cpython 3.14.4...\nmyproject ready",
   },
   {
     cmd: "pyr add httpx",

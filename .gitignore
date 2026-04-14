@@ -4,3 +4,5 @@ __pycache__/
 dist/
 *.egg-info/
 site/node_modules/
+site/_fresh/
+site/deno.lock

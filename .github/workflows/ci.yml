@@ -4,16 +4,8 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
-    paths-ignore:
-      - "site/**"
-      - "*.md"
-      - "LICENSE"
   pull_request:
     branches: [main]
-    paths-ignore:
-      - "site/**"
-      - "*.md"
-      - "LICENSE"
 
 # Coalesce re-pushes to the same ref. Main and tag pushes live in different
 # groups (different refs) so they both still run, but spamming a branch with

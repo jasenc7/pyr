@@ -2,10 +2,13 @@
   "name": "pyr",
   "version": "0.1.0",
   "exports": "./lib.ts",
+  "exclude": ["site"],
   "fmt": {
-    "lineWidth": 100
+    "lineWidth": 100,
+    "exclude": ["site"]
   },
   "lint": {
+    "exclude": ["site"],
     "rules": {
       "tags": ["recommended"]
     }

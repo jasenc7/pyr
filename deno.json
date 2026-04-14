@@ -1,0 +1,20 @@
+{
+  "name": "pyr",
+  "version": "0.1.0",
+  "exports": "./lib.ts",
+  "fmt": {
+    "lineWidth": 100
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "imports": {
+    "@std/cli": "jsr:@std/cli@^1",
+    "@std/toml": "jsr:@std/toml@^1"
+  },
+  "tasks": {
+    "test": "deno test -A"
+  }
+}

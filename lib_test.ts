@@ -1,0 +1,584 @@
+import { assertEquals, assertMatch } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import {
+  addPyprojectDep,
+  basename,
+  canonicalizeName,
+  config,
+  gitignore,
+  isWindows,
+  managedPython,
+  parseRequirementName,
+  platformTriple,
+  pyproject,
+  pyrHome,
+  readLock,
+  readPyprojectDeps,
+  removePyprojectDep,
+  stamp,
+  sync,
+  venvPaths,
+  writeLock,
+} from "./lib.ts";
+
+// --- unit tests ---
+
+Deno.test("basename extracts last segment", () => {
+  assertEquals(basename("/foo/bar/baz"), "baz");
+  assertEquals(basename("single"), "single");
+  assertEquals(basename("/trailing/slash/"), "slash");
+  assertEquals(basename("/trailing/slashes///"), "slashes");
+  assertEquals(basename(""), "");
+  assertEquals(basename("/"), "");
+  // Windows-style separators.
+  assertEquals(basename("C:\\dev\\proj"), "proj");
+  assertEquals(basename("C:\\dev\\proj\\"), "proj");
+  assertEquals(basename("a/mixed\\path/here"), "here");
+});
+
+Deno.test("platformTriple returns a valid triple", () => {
+  const triple = platformTriple();
+  assertMatch(
+    triple,
+    /^(aarch64|x86_64)-(apple-darwin|unknown-linux-gnu|pc-windows-msvc)$/,
+  );
+});
+
+Deno.test("pyproject stamp contains project name", () => {
+  const result = pyproject("myapp");
+  assertMatch(result, /name = "myapp"/);
+  assertMatch(result, /requires-python/);
+});
+
+Deno.test("stamp is runnable python", () => {
+  const result = stamp();
+  assertMatch(result, /def main\(\)/);
+  assertMatch(result, /if __name__/);
+});
+
+Deno.test("config stamp has ENV default", () => {
+  const result = config();
+  assertMatch(result, /ENV.*development/);
+});
+
+Deno.test("gitignore includes .venv and __pycache__", () => {
+  const result = gitignore();
+  assertMatch(result, /\.venv/);
+  assertMatch(result, /__pycache__/);
+});
+
+// --- platform helpers ---
+
+Deno.test("venvPaths returns shape matching current OS", () => {
+  const v = venvPaths();
+  assertEquals(v.root, ".venv");
+  if (isWindows()) {
+    assertEquals(v.binDir, ".venv\\Scripts");
+    assertEquals(v.python, ".venv\\Scripts\\python.exe");
+    assertEquals(v.pip, ".venv\\Scripts\\pip.exe");
+    assertEquals(v.stamp, ".venv\\.pyr-python");
+  } else {
+    assertEquals(v.binDir, ".venv/bin");
+    assertEquals(v.python, ".venv/bin/python");
+    assertEquals(v.pip, ".venv/bin/pip");
+    assertEquals(v.stamp, ".venv/.pyr-python");
+  }
+});
+
+Deno.test("venvPaths honors a custom root", () => {
+  const v = venvPaths("project/.venv");
+  if (isWindows()) {
+    assertEquals(v.python, "project/.venv\\Scripts\\python.exe");
+  } else {
+    assertEquals(v.python, "project/.venv/bin/python");
+  }
+});
+
+Deno.test("managedPython matches platform", () => {
+  const home = pyrHome();
+  const expected = isWindows() ? `${home}/python/python.exe` : `${home}/python/bin/python3`;
+  assertEquals(managedPython(), expected);
+});
+
+Deno.test("pyrHome honors PYR_HOME", () => {
+  const prev = Deno.env.get("PYR_HOME");
+  try {
+    Deno.env.set("PYR_HOME", "/tmp/test-pyr");
+    assertEquals(pyrHome(), "/tmp/test-pyr");
+  } finally {
+    if (prev === undefined) Deno.env.delete("PYR_HOME");
+    else Deno.env.set("PYR_HOME", prev);
+  }
+});
+
+// --- requirement parsing ---
+
+Deno.test("canonicalizeName follows PEP 503", () => {
+  assertEquals(canonicalizeName("Requests"), "requests");
+  assertEquals(canonicalizeName("My_Package.Name"), "my-package-name");
+  assertEquals(canonicalizeName("a..b__c--d"), "a-b-c-d");
+});
+
+Deno.test("parseRequirementName handles common shapes", () => {
+  const cases: Array<[string, string | null]> = [
+    ["requests", "requests"],
+    ["requests==2.31.0", "requests"],
+    ["requests>=1.0,<2.0", "requests"],
+    ["requests~=2.0", "requests"],
+    ["requests[security]", "requests"],
+    ["httpx[http2]==0.27.0", "httpx"],
+    ["git+https://github.com/org/repo.git@main#egg=foo", "foo"],
+    ["foo @ git+https://github.com/org/foo.git", "foo"],
+    [`requests; python_version >= "3.8"`, "requests"],
+    ["requests  # needed for X", "requests"],
+    ["My_Package.Name", "my-package-name"],
+    ["-e ./path/to/pkg", null],
+    ["--editable ./path/to/pkg", null],
+    ["./path/to/pkg", null],
+    ["", null],
+    ["   # only comment", null],
+    ["https://example.com/x.tar.gz", null],
+  ];
+  for (const [input, expected] of cases) {
+    assertEquals(
+      parseRequirementName(input),
+      expected,
+      `input: ${JSON.stringify(input)}`,
+    );
+  }
+});
+
+// --- pyproject io ---
+
+async function withTmpToml(
+  initial: string,
+  fn: (path: string) => Promise<void>,
+): Promise<string> {
+  const dir = await Deno.makeTempDir();
+  const path = `${dir}/pyproject.toml`;
+  try {
+    await Deno.writeTextFile(path, initial);
+    await fn(path);
+    return await Deno.readTextFile(path);
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+}
+
+Deno.test("readPyprojectDeps returns empty for missing file", async () => {
+  const dir = await Deno.makeTempDir();
+  try {
+    const deps = await readPyprojectDeps(`${dir}/pyproject.toml`);
+    assertEquals(deps, []);
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+Deno.test("readPyprojectDeps returns empty when [project] is absent", async () => {
+  const dir = await Deno.makeTempDir();
+  const path = `${dir}/pyproject.toml`;
+  try {
+    await Deno.writeTextFile(path, `[tool.poetry]\nname = "foo"\n`);
+    assertEquals(await readPyprojectDeps(path), []);
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+Deno.test("readPyprojectDeps returns empty list when section is empty", async () => {
+  const dir = await Deno.makeTempDir();
+  const path = `${dir}/pyproject.toml`;
+  try {
+    await Deno.writeTextFile(
+      path,
+      `[project]\nname = "foo"\nversion = "0.1.0"\ndependencies = []\n`,
+    );
+    assertEquals(await readPyprojectDeps(path), []);
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+Deno.test("readPyprojectDeps preserves specs with extras and constraints", async () => {
+  const dir = await Deno.makeTempDir();
+  const path = `${dir}/pyproject.toml`;
+  try {
+    await Deno.writeTextFile(
+      path,
+      `[project]\nname = "foo"\ndependencies = [\n  "requests>=2,<3",\n  "httpx[http2]==0.27.0",\n]\n`,
+    );
+    assertEquals(await readPyprojectDeps(path), [
+      "requests>=2,<3",
+      "httpx[http2]==0.27.0",
+    ]);
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+Deno.test("addPyprojectDep appends to empty deps", async () => {
+  const result = await withTmpToml(
+    `[project]\nname = "foo"\nversion = "0.1.0"\ndependencies = []\n`,
+    async (p) => {
+      await addPyprojectDep("requests", p);
+    },
+  );
+  assertMatch(result, /dependencies = \[\n {4}"requests",\n\]/);
+});
+
+Deno.test("addPyprojectDep deduplicates by canonical name", async () => {
+  const result = await withTmpToml(
+    `[project]\nname = "foo"\ndependencies = [\n    "Requests==1.0",\n]\n`,
+    async (p) => {
+      await addPyprojectDep("requests==2.31.0", p);
+    },
+  );
+  // Only the new spec should remain (existing "Requests==1.0" canonicalized to
+  // "requests" matches the new one and is replaced).
+  assertMatch(result, /"requests==2\.31\.0"/);
+  assertEquals(result.match(/"[Rr]equests/g)?.length, 1);
+});
+
+Deno.test("addPyprojectDep preserves comments and other tables", async () => {
+  const initial = `# top-of-file comment
+[project]
+name = "foo"  # inline comment
+dependencies = [
+    "click",
+]
+
+[tool.ruff]
+line-length = 100
+`;
+  const result = await withTmpToml(initial, async (p) => {
+    await addPyprojectDep("requests==2.31.0", p);
+  });
+  assertMatch(result, /^# top-of-file comment$/m);
+  assertMatch(result, /name = "foo" {2}# inline comment/);
+  assertMatch(result, /\[tool\.ruff\]/);
+  assertMatch(result, /line-length = 100/);
+  assertMatch(result, /"click"/);
+  assertMatch(result, /"requests==2\.31\.0"/);
+});
+
+Deno.test("addPyprojectDep creates dependencies key when missing", async () => {
+  const result = await withTmpToml(
+    `[project]\nname = "foo"\nversion = "0.1.0"\n`,
+    async (p) => {
+      await addPyprojectDep("requests", p);
+    },
+  );
+  assertMatch(result, /dependencies = \[\n {4}"requests",\n\]/);
+});
+
+Deno.test("addPyprojectDep errors when [project] is missing", async () => {
+  const dir = await Deno.makeTempDir();
+  const path = `${dir}/pyproject.toml`;
+  try {
+    await Deno.writeTextFile(path, `[tool.poetry]\nname = "foo"\n`);
+    let threw = false;
+    try {
+      await addPyprojectDep("requests", path);
+    } catch (e) {
+      threw = true;
+      assertMatch(String(e), /missing \[project\]/);
+    }
+    assertEquals(threw, true);
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+Deno.test("removePyprojectDep deletes by canonical name", async () => {
+  const initial = `[project]
+name = "foo"
+dependencies = [
+    "Requests==1.0",
+    "click",
+]
+`;
+  const result = await withTmpToml(initial, async (p) => {
+    const removed = await removePyprojectDep("requests", p);
+    assertEquals(removed, true);
+  });
+  assertEquals(/[Rr]equests/.test(result), false);
+  assertMatch(result, /"click"/);
+});
+
+Deno.test("removePyprojectDep returns false when name not present", async () => {
+  const initial = `[project]\nname = "foo"\ndependencies = [\n    "click",\n]\n`;
+  await withTmpToml(initial, async (p) => {
+    const removed = await removePyprojectDep("requests", p);
+    assertEquals(removed, false);
+  });
+});
+
+// --- lockfile io ---
+
+Deno.test("readLock returns empty for missing file", async () => {
+  const dir = await Deno.makeTempDir();
+  try {
+    const m = await readLock(`${dir}/requirements.txt`);
+    assertEquals(m.size, 0);
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+Deno.test("readLock parses pinned entries keyed by canonical name", async () => {
+  const dir = await Deno.makeTempDir();
+  const path = `${dir}/requirements.txt`;
+  try {
+    await Deno.writeTextFile(
+      path,
+      `# generated by pyr 0.2.0; do not edit
+Requests==2.31.0
+httpx[http2]==0.27.0
+`,
+    );
+    const m = await readLock(path);
+    assertEquals(m.size, 2);
+    assertEquals(m.get("requests"), "Requests==2.31.0");
+    assertEquals(m.get("httpx"), "httpx[http2]==0.27.0");
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+Deno.test("readLock skips comments and blanks", async () => {
+  const dir = await Deno.makeTempDir();
+  const path = `${dir}/requirements.txt`;
+  try {
+    await Deno.writeTextFile(path, `# header\n\n# another comment\nclick==8.1.7\n\n`);
+    const m = await readLock(path);
+    assertEquals(m.size, 1);
+    assertEquals(m.get("click"), "click==8.1.7");
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+Deno.test("writeLock emits sorted entries with header", async () => {
+  const dir = await Deno.makeTempDir();
+  const path = `${dir}/requirements.txt`;
+  try {
+    await writeLock(["requests==2.31.0", "click==8.1.7", "anyio==4.3.0"], path);
+    const text = await Deno.readTextFile(path);
+    const lines = text.split("\n");
+    assertMatch(lines[0], /^# generated by pyr/);
+    assertEquals(lines.slice(1, 4), ["anyio==4.3.0", "click==8.1.7", "requests==2.31.0"]);
+    // Trailing newline.
+    assertEquals(lines[4], "");
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+Deno.test("writeLock filters local-editable self-installs", async () => {
+  const dir = await Deno.makeTempDir();
+  const path = `${dir}/requirements.txt`;
+  try {
+    await writeLock(["click==8.1.7", "-e .", "-e file:///tmp/foo"], path);
+    const text = await Deno.readTextFile(path);
+    assertEquals(/^-e /m.test(text), false);
+    assertMatch(text, /^click==8\.1\.7$/m);
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+Deno.test("writeLock + readLock round-trip preserves VCS-style entries", async () => {
+  const dir = await Deno.makeTempDir();
+  const path = `${dir}/requirements.txt`;
+  try {
+    const input = [
+      "anyio==4.3.0",
+      "foo @ git+https://github.com/org/foo.git@main",
+      "httpx[http2]==0.27.0",
+    ];
+    await writeLock(input, path);
+    const m = await readLock(path);
+    assertEquals(m.size, 3);
+    assertEquals(m.get("anyio"), "anyio==4.3.0");
+    assertEquals(m.get("foo"), "foo @ git+https://github.com/org/foo.git@main");
+    assertEquals(m.get("httpx"), "httpx[http2]==0.27.0");
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+Deno.test("writeLock with empty input writes header only", async () => {
+  const dir = await Deno.makeTempDir();
+  const path = `${dir}/requirements.txt`;
+  try {
+    await writeLock([], path);
+    const text = await Deno.readTextFile(path);
+    assertMatch(text, /^# generated by pyr [^\n]+\n$/);
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+// --- guards ---
+
+/** Run `deno run -A main.ts <args>` from `cwd`, capturing stdout/stderr/code.
+ *  Used to test guards that call Deno.exit, which would terminate the test
+ *  runner if invoked in-process. */
+async function runPyr(cwd: string, args: string[]): Promise<{
+  code: number;
+  stdout: string;
+  stderr: string;
+}> {
+  const repoRoot = new URL("./main.ts", import.meta.url).pathname.replace(
+    /\/main\.ts$/,
+    "",
+  );
+  const cmd = new Deno.Command(Deno.execPath(), {
+    args: ["run", "-A", `${repoRoot}/main.ts`, ...args],
+    cwd,
+    stdout: "piped",
+    stderr: "piped",
+  });
+  const result = await cmd.output();
+  return {
+    code: result.code,
+    stdout: new TextDecoder().decode(result.stdout),
+    stderr: new TextDecoder().decode(result.stderr),
+  };
+}
+
+Deno.test("init refuses non-empty target dir", async () => {
+  const tmp = await Deno.makeTempDir();
+  try {
+    await Deno.mkdir(`${tmp}/myproject`);
+    await Deno.writeTextFile(`${tmp}/myproject/existing.txt`, "hi");
+    const result = await runPyr(tmp, ["init", "myproject"]);
+    assertEquals(result.code, 1);
+    assertMatch(result.stderr, /exists and is not empty/);
+  } finally {
+    await Deno.remove(tmp, { recursive: true });
+  }
+});
+
+Deno.test("init refuses to overwrite sentinel files in cwd", async () => {
+  const tmp = await Deno.makeTempDir();
+  try {
+    await Deno.writeTextFile(`${tmp}/pyproject.toml`, `[project]\nname = "x"\n`);
+    const result = await runPyr(tmp, ["init"]);
+    assertEquals(result.code, 1);
+    assertMatch(result.stderr, /refusing to overwrite pyproject\.toml/);
+  } finally {
+    await Deno.remove(tmp, { recursive: true });
+  }
+});
+
+Deno.test("run errors when app/main.py is missing", async () => {
+  const tmp = await Deno.makeTempDir();
+  try {
+    const result = await runPyr(tmp, ["run"]);
+    assertEquals(result.code, 1);
+    assertMatch(result.stderr, /no app\/main\.py found/);
+    assertMatch(result.stderr, /pyr init/);
+  } finally {
+    await Deno.remove(tmp, { recursive: true });
+  }
+});
+
+// --- integration ---
+
+Deno.test({
+  name: "init creates project structure",
+  ignore: Deno.env.get("CI") === "true" && !Deno.env.get("PYR_INTEGRATION"),
+  fn: async () => {
+    const { init } = await import("./lib.ts");
+    const tmp = await Deno.makeTempDir();
+    const prev = Deno.cwd();
+    Deno.chdir(tmp);
+
+    try {
+      await init("testproject");
+
+      const stat = async (p: string) => {
+        try {
+          await Deno.stat(`testproject/${p}`);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
+      assertEquals(await stat("pyproject.toml"), true);
+      assertEquals(await stat("requirements.txt"), true);
+      assertEquals(await stat(".gitignore"), true);
+      assertEquals(await stat("app/__init__.py"), true);
+      assertEquals(await stat("app/config.py"), true);
+      assertEquals(await stat("app/main.py"), true);
+      assertEquals(await stat(venvPaths().python), true);
+
+      const toml = await Deno.readTextFile("testproject/pyproject.toml");
+      assertMatch(toml, /name = "testproject"/);
+    } finally {
+      Deno.chdir(prev);
+      await Deno.remove(tmp, { recursive: true });
+    }
+  },
+});
+
+Deno.test({
+  name: "sync resolves, locks, and prunes",
+  ignore: Deno.env.get("CI") === "true" && !Deno.env.get("PYR_INTEGRATION"),
+  fn: async () => {
+    const { init } = await import("./lib.ts");
+    const tmp = await Deno.makeTempDir();
+    const prev = Deno.cwd();
+    Deno.chdir(tmp);
+
+    try {
+      await init("syncproject");
+      Deno.chdir("syncproject");
+
+      // Add click (small pure-Python pkg) to pyproject; sync should install
+      // it and write a flat lock with the pyr header.
+      await addPyprojectDep("click==8.1.7");
+      await sync({ quiet: true });
+
+      const lockText = await Deno.readTextFile("requirements.txt");
+      assertMatch(lockText, /^# generated by pyr/);
+      assertMatch(lockText, /^click==8\.1\.7$/m);
+
+      // The venv should now have click importable.
+      const importCheck = new Deno.Command(venvPaths().python, {
+        args: ["-c", "import click; print(click.__version__)"],
+        stdout: "piped",
+        stderr: "piped",
+      });
+      const importResult = await importCheck.output();
+      assertEquals(importResult.success, true);
+      assertMatch(new TextDecoder().decode(importResult.stdout), /8\.1\.7/);
+
+      // sync is idempotent: a second call with no changes is a no-op.
+      const lockBefore = await Deno.readTextFile("requirements.txt");
+      await sync({ quiet: true });
+      const lockAfter = await Deno.readTextFile("requirements.txt");
+      assertEquals(lockBefore, lockAfter);
+
+      // Remove click; sync should prune it from both lock and venv.
+      assertEquals(await removePyprojectDep("click"), true);
+      await sync({ quiet: true });
+
+      const lockAfterRemove = await Deno.readTextFile("requirements.txt");
+      assertEquals(/click/i.test(lockAfterRemove), false);
+
+      const showCheck = new Deno.Command(venvPaths().pip, {
+        args: ["show", "click"],
+        stdout: "null",
+        stderr: "null",
+      });
+      const showResult = await showCheck.output();
+      assertEquals(showResult.success, false); // click is gone
+    } finally {
+      Deno.chdir(prev);
+      await Deno.remove(tmp, { recursive: true });
+    }
+  },
+});

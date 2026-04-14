@@ -1,6 +1,10 @@
-import { type PageProps } from "$fresh/server.ts";
+import { type PageProps } from "fresh";
 
-export default function App({ Component }: PageProps) {
+export default function App({ Component, url }: PageProps) {
+  const path = url.pathname;
+  const isHome = path === "/";
+  const isDocs = path === "/docs" || path === "/app-convention";
+
   return (
     <html lang="en">
       <head>
@@ -24,7 +28,40 @@ export default function App({ Component }: PageProps) {
         <link rel="stylesheet" href="/styles.css" />
       </head>
       <body>
+        <nav class="nav">
+          {isHome
+            ? <span class="nav-logo">pyrun</span>
+            : <a class="nav-logo" href="/">pyrun</a>}
+          <div class="nav-right">
+            {isDocs
+              ? <span class="nav-link nav-link-current">docs</span>
+              : <a class="nav-link" href="/docs">docs</a>}
+            <a
+              class="nav-link"
+              href="https://github.com/jasenc7/pyr"
+              target="_blank"
+              rel="noopener"
+            >
+              github
+            </a>
+          </div>
+        </nav>
+
         <Component />
+
+        <footer class="footer">
+          <span>pyrun.dev</span>
+          <span>
+            <a
+              class="nav-link"
+              href="https://jasencarroll.com"
+              target="_blank"
+              rel="noopener"
+            >
+              by jasencarroll
+            </a>
+          </span>
+        </footer>
       </body>
     </html>
   );

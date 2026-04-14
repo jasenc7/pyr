@@ -1,4 +1,4 @@
-# pyr docs
+# docs
 
 A small CLI that bootstraps and manages Python projects. One binary, no Python prerequisite — pyr
 downloads a standalone CPython into `~/.pyr/python` on first use and creates a project-local `.venv`

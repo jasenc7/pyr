@@ -90,7 +90,7 @@ export default function Terminal() {
         return (
           <div key={i}>
             <div>
-              <span class="prompt">$ </span>
+              <span class="prompt">$</span>
               <span class="cmd">{cmdText}</span>
               {showCursor && <span class="cursor">_</span>}
             </div>

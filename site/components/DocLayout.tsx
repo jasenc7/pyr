@@ -3,11 +3,9 @@ const PAGES = [
   { href: "/app-convention", title: "app convention" },
 ];
 
-// Read the pyr version from the root repo's deno.json — same repo, single
-// source of truth.
-const rootConfig = JSON.parse(
-  await Deno.readTextFile(new URL("../../deno.json", import.meta.url)),
-);
+// Version is pulled from the root repo's deno.json at build time (inlined
+// into the bundle). Same repo, single source of truth.
+import rootConfig from "../../deno.json" with { type: "json" };
 const VERSION: string = rootConfig.version;
 
 interface Props {

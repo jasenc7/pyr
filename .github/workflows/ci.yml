@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   check:
+    if: github.ref_type != 'tag'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -41,6 +42,7 @@ jobs:
   # binary a release would ship.
   build:
     needs: check
+    if: github.ref_type != 'tag'
     strategy:
       matrix:
         include:
@@ -85,7 +87,7 @@ jobs:
         run: Compress-Archive -Path ${{ matrix.binary }} -DestinationPath ${{ matrix.artifact }}.zip
 
       - name: upload
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}.zip
@@ -96,6 +98,7 @@ jobs:
   # `./pyr` invocations work uniformly across the OS matrix.
   smoke:
     needs: build
+    if: github.ref_type != 'tag'
     strategy:
       matrix:
         include:
@@ -109,7 +112,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v8
         with:
           name: ${{ matrix.artifact }}
 
@@ -203,20 +206,48 @@ jobs:
           ../pyr sync
           diff requirements.txt requirements.before
 
-  # Ship the already-built-and-smoked artifacts when the ref is a v* tag.
-  # No rebuild, no re-smoke — reuses the same artifacts smoke just exercised.
+  # On a v* tag, don't rebuild — find the main-branch ci run that already
+  # built-and-smoked the tagged commit, pull its artifacts, and publish.
+  # If no green main run exists for this SHA, fail loudly: tag only after
+  # main is green.
   release:
-    needs: smoke
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - name: find main ci run for this commit
+        id: find
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          run_id=$(gh run list \
+            --repo "$REPO" \
+            --workflow ci.yml \
+            --branch main \
+            --event push \
+            --commit "$SHA" \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')
+          if [ -z "$run_id" ]; then
+            echo "no successful main ci run found for $SHA"
+            echo "push to main and wait for ci to pass before tagging"
+            exit 1
+          fi
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+
       - uses: actions/download-artifact@v8
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.find.outputs.run_id }}
           merge-multiple: true
 
       - name: release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: "*.zip"

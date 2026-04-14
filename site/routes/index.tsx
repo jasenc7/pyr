@@ -43,7 +43,7 @@ export default function Home() {
         </p>
         <div class="install">
           <span>
-            <span class="prompt">$</span>
+            <span class="prompt">$ </span>
             {INSTALL_CMD}
           </span>
           <CopyButton text={INSTALL_CMD} />
@@ -52,7 +52,7 @@ export default function Home() {
 
         <div class="install">
           <span>
-            <span class="prompt">PS&gt;</span>
+            <span class="prompt">PS&gt; </span>
             {WINDOWS_INSTALL_CMD}
           </span>
           <CopyButton text={WINDOWS_INSTALL_CMD} />
@@ -99,7 +99,6 @@ export default function Home() {
           itself.
         </p>
       </section>
-
     </>
   );
 }

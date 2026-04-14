@@ -1,0 +1,316 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;0,700;1,400&display=swap");
+
+:root {
+  color-scheme: light dark;
+
+  --bg: #050505;
+  --surface: #0a0a0a;
+  --border: #161616;
+  --border-light: #262626;
+  --text: #e5e5e5;
+  --text-muted: #737373;
+  --text-dim: #525252;
+  --text-ghost: #3b3b3b;
+  --green: #22c55e;
+  --mono: "IBM Plex Mono", "SF Mono", "Cascadia Code", monospace;
+  --sans: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --border: #e5e5e5;
+    --border-light: #d4d4d4;
+    --text: #171717;
+    --text-muted: #525252;
+    --text-dim: #737373;
+    --text-ghost: #a3a3a3;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* nav */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--border);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.nav-logo {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+.nav-link {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.15s;
+}
+
+.nav-link:hover {
+  color: var(--text);
+}
+
+/* hero */
+.hero {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 120px 40px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: fadeUp 0.8s ease-out;
+}
+
+.hero h1 {
+  font-size: clamp(40px, 7vw, 72px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin-bottom: 24px;
+}
+
+.hero p {
+  font-size: 18px;
+  color: var(--text-muted);
+  max-width: 480px;
+  line-height: 1.6;
+  margin-bottom: 48px;
+}
+
+/* install block */
+.install {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--text);
+  max-width: 640px;
+  width: 100%;
+}
+
+.install .prompt {
+  color: var(--text-dim);
+}
+
+.copy-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--mono);
+  padding: 4px 8px;
+  transition: color 0.15s;
+}
+
+.copy-btn:hover {
+  color: var(--text);
+}
+
+/* terminal */
+.terminal-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 40px 120px;
+  display: flex;
+  justify-content: center;
+  animation: fadeUp 0.8s ease-out 0.3s both;
+}
+
+.terminal {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 24px;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  max-width: 640px;
+  width: 100%;
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.terminal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-ghost);
+}
+
+.terminal .prompt {
+  color: var(--text-dim);
+}
+
+.terminal .cmd {
+  color: var(--text);
+}
+
+.terminal .output {
+  color: var(--text-muted);
+  white-space: pre-line;
+  margin-bottom: 8px;
+}
+
+.terminal .cursor {
+  animation: blink 1s step-end infinite;
+}
+
+/* divider */
+.divider {
+  height: 1px;
+  background: var(--border);
+}
+
+/* features */
+.features {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 120px 40px;
+}
+
+.features-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 48px;
+  justify-content: center;
+}
+
+.feature {
+  animation: fadeUp 0.6s ease-out both;
+  flex: 0 1 300px;
+}
+
+.feature h3 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
+.feature p {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+/* philosophy */
+.philosophy {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 120px 40px;
+  text-align: center;
+}
+
+.philosophy-label {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 32px;
+}
+
+.philosophy blockquote {
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.3;
+  max-width: 700px;
+  margin: 0 auto 48px;
+}
+
+.philosophy p {
+  font-size: 15px;
+  color: var(--text-dim);
+  max-width: 520px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* footer */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-ghost);
+}
+
+/* mobile */
+@media (max-width: 640px) {
+  .hero {
+    padding: 80px 24px 60px;
+  }
+  .terminal-wrap {
+    padding: 24px 24px 80px;
+  }
+  .features {
+    padding: 80px 24px;
+  }
+  .philosophy {
+    padding: 80px 24px;
+  }
+  .nav {
+    padding: 16px 24px;
+  }
+  .footer {
+    padding: 24px;
+  }
+  .install {
+    font-size: 12px;
+    padding: 12px;
+  }
+}

@@ -88,6 +88,17 @@ body {
   color: var(--text);
 }
 
+.nav-right {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+a.nav-logo {
+  color: var(--text);
+  text-decoration: none;
+}
+
 /* hero */
 .hero {
   max-width: 1100px;
@@ -134,6 +145,30 @@ body {
 
 .install .prompt {
   color: var(--text-dim);
+}
+
+.install + .install {
+  margin-top: 16px;
+}
+
+.install-os {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 8px 0 24px;
+}
+
+.install-os-link {
+  color: var(--text-dim);
+  text-decoration: underline;
+  text-decoration-color: var(--border-light);
+  text-underline-offset: 2px;
+}
+
+.install-os-link:hover {
+  color: var(--text);
 }
 
 .copy-btn {
@@ -289,6 +324,30 @@ body {
   color: var(--text-ghost);
 }
 
+/* docs */
+.docs-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 60px 40px 120px;
+  animation: fadeUp 0.5s ease-out;
+}
+
+.docs-wrap .markdown-body {
+  background: transparent !important;
+  color: var(--text);
+  font-family: var(--sans);
+}
+
+.docs-wrap .markdown-body pre,
+.docs-wrap .markdown-body code {
+  font-family: var(--mono);
+}
+
+.docs-wrap .markdown-body pre {
+  background: var(--surface) !important;
+  border: 1px solid var(--border-light);
+}
+
 /* mobile */
 @media (max-width: 640px) {
   .hero {
@@ -312,5 +371,8 @@ body {
   .install {
     font-size: 12px;
     padding: 12px;
+  }
+  .docs-wrap {
+    padding: 32px 24px 80px;
   }
 }

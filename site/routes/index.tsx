@@ -2,6 +2,7 @@ import CopyButton from "../islands/CopyButton.tsx";
 import Terminal from "../islands/Terminal.tsx";
 
 const INSTALL_CMD = "curl -fsSL https://pyrun.dev/install.sh | sh";
+const WINDOWS_INSTALL_CMD = "irm https://pyrun.dev/install.ps1 | iex";
 
 const FEATURES = [
   {
@@ -37,14 +38,17 @@ export default function Home() {
       {/* nav */}
       <nav class="nav">
         <span class="nav-logo">pyrun</span>
-        <a
-          class="nav-link"
-          href="https://github.com/jasenc7/pyr"
-          target="_blank"
-          rel="noopener"
-        >
-          github
-        </a>
+        <div class="nav-right">
+          <a class="nav-link" href="/docs">docs</a>
+          <a
+            class="nav-link"
+            href="https://github.com/jasenc7/pyr"
+            target="_blank"
+            rel="noopener"
+          >
+            github
+          </a>
+        </div>
       </nav>
 
       {/* hero */}
@@ -55,8 +59,8 @@ export default function Home() {
           the ceremony
         </h1>
         <p>
-          A project manager that bootstraps its own runtime, manages your venv, and gets out of the
-          way. Six commands. One honest lockfile.
+          A project manager that bootstraps its own runtime, manages your venv,
+          and gets out of the way. Six commands. One honest lockfile.
         </p>
         <div class="install">
           <span>
@@ -65,6 +69,19 @@ export default function Home() {
           </span>
           <CopyButton text={INSTALL_CMD} />
         </div>
+        <p class="install-os">macOS / Linux</p>
+
+        <div class="install">
+          <span>
+            <span class="prompt">PS&gt;</span>
+            {WINDOWS_INSTALL_CMD}
+          </span>
+          <CopyButton text={WINDOWS_INSTALL_CMD} />
+        </div>
+        <p class="install-os">
+          Windows ·{" "}
+          <a href="/docs#windows" class="install-os-link">manual install</a>
+        </p>
       </section>
 
       {/* terminal demo */}
@@ -95,9 +112,10 @@ export default function Home() {
           The thing that manages Python shouldn't be Python.
         </blockquote>
         <p>
-          uv is Rust. poetry is Python — and bootstrapping it is the problem it claims to solve. pyr
-          is a single compiled binary. It drives pip and the standalone CPython runtime; it doesn't
-          depend on them to install itself.
+          uv is Rust. poetry is Python — and bootstrapping it is the problem it
+          claims to solve. pyr is a single compiled binary. It drives pip and
+          the standalone CPython runtime; it doesn't depend on them to install
+          itself.
         </p>
       </section>
 

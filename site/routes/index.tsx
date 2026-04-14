@@ -30,24 +30,6 @@ const FEATURES = [
 export default function Home() {
   return (
     <>
-      {/* nav */}
-      <nav class="nav">
-        <span class="nav-logo">pyrun</span>
-        <div class="nav-right">
-          <a class="nav-link" href="/docs">
-            docs
-          </a>
-          <a
-            class="nav-link"
-            href="https://github.com/jasenc7/pyr"
-            target="_blank"
-            rel="noopener"
-          >
-            github
-          </a>
-        </div>
-      </nav>
-
       {/* hero */}
       <section class="hero">
         <h1>
@@ -61,7 +43,7 @@ export default function Home() {
         </p>
         <div class="install">
           <span>
-            <span class="prompt">$ </span>
+            <span class="prompt">$</span>
             {INSTALL_CMD}
           </span>
           <CopyButton text={INSTALL_CMD} />
@@ -70,7 +52,7 @@ export default function Home() {
 
         <div class="install">
           <span>
-            <span class="prompt">PS&gt; </span>
+            <span class="prompt">PS&gt;</span>
             {WINDOWS_INSTALL_CMD}
           </span>
           <CopyButton text={WINDOWS_INSTALL_CMD} />
@@ -118,20 +100,6 @@ export default function Home() {
         </p>
       </section>
 
-      {/* footer */}
-      <footer class="footer">
-        <span>pyrun.dev</span>
-        <span>
-          <a
-            class="nav-link"
-            href="https://jasencarroll.com"
-            target="_blank"
-            rel="noopener"
-          >
-            by jasencarroll
-          </a>
-        </span>
-      </footer>
     </>
   );
 }

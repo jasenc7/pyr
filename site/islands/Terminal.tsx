@@ -8,7 +8,8 @@ const STEPS = [
   },
   {
     cmd: "pyr init myproject && cd myproject",
-    output: "bootstrapping python...\ndownloading cpython 3.14.4...\nmyproject ready",
+    output:
+      "bootstrapping python...\ndownloading cpython 3.14.4...\nmyproject ready",
   },
   {
     cmd: "pyr add httpx",
@@ -89,7 +90,7 @@ export default function Terminal() {
         return (
           <div key={i}>
             <div>
-              <span class="prompt">$</span>
+              <span class="prompt">$ </span>
               <span class="cmd">{cmdText}</span>
               {showCursor && <span class="cursor">_</span>}
             </div>

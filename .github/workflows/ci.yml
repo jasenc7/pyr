@@ -15,26 +15,54 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - '*.ts'
+              - 'deno.json'
+              - 'deno.lock'
+              - '.github/workflows/**'
   check:
-    if: github.ref_type != 'tag'
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v5
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-
       - name: fmt
         run: deno fmt --check
-
       - name: lint
         run: deno lint
-
       - name: type check
         run: deno check main.ts lib.ts
-
       - name: test
         run: deno test -A
+
+  gate:
+    if: always()
+    needs: [changes, check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: pass
+        run: |
+          if [ "${{ needs.changes.outputs.code }}" = "false" ]; then
+            echo "no code changes, skipping"
+            exit 0
+          fi
+          if [ "${{ needs.check.result }}" = "success" ]; then
+            exit 0
+          fi
+          exit 1
 
   # Build every release target and upload each as a named artifact. The smoke
   # job pulls these artifacts back down and exercises them, so a failed
@@ -42,7 +70,7 @@ jobs:
   # binary a release would ship.
   build:
     needs: check
-    if: github.ref_type != 'tag'
+    if: github.ref_type != 'tag' && github.event_name != 'pull_request'
     strategy:
       matrix:
         include:
@@ -98,7 +126,7 @@ jobs:
   # `./pyr` invocations work uniformly across the OS matrix.
   smoke:
     needs: build
-    if: github.ref_type != 'tag'
+    if: github.ref_type != 'tag' && github.event_name != 'pull_request'
     strategy:
       matrix:
         include:

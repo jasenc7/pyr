@@ -8,6 +8,13 @@ export default function App({ Component, url }: PageProps) {
   return (
     <html lang="en">
       <head>
+        <script
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon={JSON.stringify({
+            token: "69eb3aa5f4874e21a287c7de86cfea48",
+          })}
+        ></script>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>pyrun - Python without the ceremony</title>
@@ -29,13 +36,21 @@ export default function App({ Component, url }: PageProps) {
       </head>
       <body>
         <nav class="nav">
-          {isHome
-            ? <span class="nav-logo">pyrun</span>
-            : <a class="nav-logo" href="/">pyrun</a>}
+          {isHome ? (
+            <span class="nav-logo">pyrun</span>
+          ) : (
+            <a class="nav-logo" href="/">
+              pyrun
+            </a>
+          )}
           <div class="nav-right">
-            {isDocs
-              ? <span class="nav-link nav-link-current">docs</span>
-              : <a class="nav-link" href="/docs">docs</a>}
+            {isDocs ? (
+              <span class="nav-link nav-link-current">docs</span>
+            ) : (
+              <a class="nav-link" href="/docs">
+                docs
+              </a>
+            )}
             <a
               class="nav-link"
               href="https://github.com/jasenc7/pyr"

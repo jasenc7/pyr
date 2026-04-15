@@ -9,6 +9,8 @@
   },
   "imports": {
     "preact": "npm:preact@^10.28.3",
+    "preact/jsx-runtime": "npm:preact@^10.28.3/jsx-runtime",
+    "preact/jsx-dev-runtime": "npm:preact@^10.28.3/jsx-dev-runtime",
     "preact/": "npm:preact@^10.28.3/",
     "@preact/signals": "npm:@preact/signals@^2.7.1",
     "$gfm": "jsr:@deno/gfm@^0.12.0",

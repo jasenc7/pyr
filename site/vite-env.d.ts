@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
 declare module "*.md" {
-  const content: string;
-  export default content;
+  const md: string;
+  export default md;
 }

@@ -483,3 +483,7 @@ a.nav-logo {
     border-bottom: 1px solid var(--border);
   }
 }
+
+.prompt::after {
+  content: " ";
+}

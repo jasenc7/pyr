@@ -35,9 +35,9 @@ export default function DocLayout({ html, href }: Props) {
             <li>
               <a
                 href={p.href}
-                class={
-                  p.href === href ? "docs-nav-link active" : "docs-nav-link"
-                }
+                class={p.href === href
+                  ? "docs-nav-link active"
+                  : "docs-nav-link"}
               >
                 {p.title}
               </a>

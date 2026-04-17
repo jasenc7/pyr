@@ -10,7 +10,9 @@ export default defineConfig({
       transform(_code, id) {
         if (id.endsWith(".md")) {
           return {
-            code: `export default ${JSON.stringify(readFileSync(id, "utf-8"))};`,
+            code: `export default ${
+              JSON.stringify(readFileSync(id, "utf-8"))
+            };`,
             map: null,
           };
         }

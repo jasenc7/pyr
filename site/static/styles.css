@@ -4,8 +4,6 @@
   box-sizing: border-box;
 }
 
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;0,700;1,400&display=swap");
-
 :root {
   color-scheme: light dark;
 
@@ -17,7 +15,6 @@
   --text-muted: #737373;
   --text-dim: #525252;
   --text-ghost: #3b3b3b;
-  --green: #22c55e;
   --mono: "IBM Plex Mono", "SF Mono", "Cascadia Code", monospace;
   --sans: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
 }

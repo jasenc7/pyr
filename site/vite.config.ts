@@ -4,17 +4,16 @@ import { readFileSync } from "node:fs";
 
 export default defineConfig({
   plugins: [
-    // Inline any `.md` import as a default-exported string.
     {
-      name: "md-as-string",
-      transform(_code, id) {
-        if (id.endsWith(".md")) {
-          return {
-            code: `export default ${
-              JSON.stringify(readFileSync(id, "utf-8"))
-            };`,
-            map: null,
-          };
+      name: "inline-raw-files",
+      enforce: "pre",
+      load(id) {
+        const path = id.split("?")[0];
+        if (path.endsWith(".sh") || path.endsWith(".ps1")) {
+          return `export default ${JSON.stringify(readFileSync(path, "utf-8"))};`;
+        }
+        if (path.endsWith(".md")) {
+          return `export default ${JSON.stringify(readFileSync(path, "utf-8"))};`;
         }
       },
     },

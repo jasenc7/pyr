@@ -2,13 +2,14 @@ import { type HandlerFn } from "fresh";
 import SCRIPT from "../assets/install.ps1";
 
 export const handler: HandlerFn<unknown, unknown> = (ctx) => {
+  const h = ctx.req.headers;
   console.log(
     JSON.stringify({
       event: "install.ps1",
-      ua: ctx.req.headers.get("user-agent"),
-      country: ctx.req.headers.get("x-country"),
-      city: ctx.req.headers.get("x-city"),
-      region: ctx.req.headers.get("x-region"),
+      ua: h.get("user-agent"),
+      country: h.get("cf-ipcountry"),
+      city: h.get("cf-ipcity"),
+      region: h.get("cf-region"),
       edge: Deno.env.get("DENO_REGION"),
       ts: Date.now(),
     }),

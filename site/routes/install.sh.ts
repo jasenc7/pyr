@@ -1,7 +1,7 @@
 import { type HandlerFn } from "fresh";
 
 const SCRIPT = await Deno.readTextFile(
-  new URL("../assets/install.sh", import.meta.url),
+  new URL("../assets/install.sh?raw", import.meta.url),
 );
 
 export const handler: HandlerFn<unknown, unknown> = (ctx) => {

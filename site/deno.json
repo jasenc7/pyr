@@ -9,6 +9,7 @@
   },
   "imports": {
     "preact": "npm:preact@^10.28.3",
+    "preact/hooks": "npm:preact@^10.28.3/hooks",
     "preact/jsx-runtime": "npm:preact@^10.28.3/jsx-runtime",
     "preact/jsx-dev-runtime": "npm:preact@^10.28.3/jsx-dev-runtime",
     "preact/": "npm:preact@^10.28.3/",

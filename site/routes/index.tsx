@@ -7,23 +7,28 @@ const WINDOWS_INSTALL_CMD = "irm https://pyrun.dev/install.ps1 | iex";
 const FEATURES = [
   {
     title: "Zero system deps",
-    body: "pyr bootstraps its own CPython runtime. No brew, no apt, no pyenv. curl and you're running.",
+    body:
+      "pyr bootstraps its own CPython runtime. No brew, no apt, no pyenv. curl and you're running.",
   },
   {
     title: "Six commands",
-    body: "init, run, add, remove, sync, upgrade. That's the whole API. No activate, no pip freeze, no requirements hell.",
+    body:
+      "init, run, add, remove, sync, upgrade. That's the whole API. No activate, no pip freeze, no requirements hell.",
   },
   {
     title: "Honest lockfile",
-    body: "pyproject.toml is the source of truth. requirements.txt is a generated, fully-pinned lock. Edit either; pyr reconciles on the next run.",
+    body:
+      "pyproject.toml is the source of truth. requirements.txt is a generated, fully-pinned lock. Edit either; pyr reconciles on the next run.",
   },
   {
     title: "Self-updating",
-    body: "pyr upgrade updates the tool. pyr upgrade --python updates the runtime. Stale venvs rebuild automatically.",
+    body:
+      "pyr upgrade updates the tool. pyr upgrade --python updates the runtime. Stale venvs rebuild automatically.",
   },
   {
     title: "Not written in Python",
-    body: "The thing that manages Python shouldn't need Python to install. pyr is a single compiled binary that drives pip and the runtime it bootstraps — never the other way around.",
+    body:
+      "The thing that manages Python shouldn't need Python to install. pyr is a single compiled binary that drives pip and the runtime it bootstraps — never the other way around.",
   },
 ];
 
@@ -43,7 +48,7 @@ export default function Home() {
         </p>
         <div class="install">
           <span>
-            <span class="prompt">$ </span>
+            <span class="prompt">$</span>
             {INSTALL_CMD}
           </span>
           <CopyButton text={INSTALL_CMD} />
@@ -52,7 +57,7 @@ export default function Home() {
 
         <div class="install">
           <span>
-            <span class="prompt">PS&gt; </span>
+            <span class="prompt">PS&gt;</span>
             {WINDOWS_INSTALL_CMD}
           </span>
           <CopyButton text={WINDOWS_INSTALL_CMD} />

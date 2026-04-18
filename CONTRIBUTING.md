@@ -1,6 +1,7 @@
 # Contributing to pyr
 
-Thanks for your interest! pyr is a minimal tool, and contributions should focus on reducing ceremony for Python projects.
+Thanks for your interest! pyr is a minimal tool, and contributions should focus on reducing ceremony
+for Python projects.
 
 ---
 
@@ -16,11 +17,12 @@ Open an [issue](https://github.com/jasenc7/pyr/issues) with:
 
 ## **Suggesting Features**
 
-Open a [Discussion](https://github.com/jasenc7/pyr/discussions) first. pyr’s scope is intentionally narrow:
+Open a [Discussion](https://github.com/jasenc7/pyr/discussions) first. pyr’s scope is intentionally
+narrow:
 
 - Does it reduce ceremony for Python projects?
-- Would it make sense for `pip` or `venv` to do this?  
-If not, it’s likely out of scope.
+- Would it make sense for `pip` or `venv` to do this?\
+  If not, it’s likely out of scope.
 
 ---
 
@@ -28,15 +30,18 @@ If not, it’s likely out of scope.
 
 1. Fork the repo and create a branch.
 2. Run checks:
-  ```sh
-   deno fmt
-   deno lint
-   deno check
-   deno run test
-  ```
+
+```sh
+deno fmt
+deno lint
+deno check
+deno run test
+```
+
 3. Open a PR with:
-  - A clear description.
-  - Reference to any related issues.
+
+- A clear description.
+- Reference to any related issues.
 
 ---
 

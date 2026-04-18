@@ -1,7 +1,7 @@
 ## name: Issue Report
 
-about: Report an issue in pyr.  
-title: "[ISSUE] "  
+about: Report an issue in pyr.\
+title: "[ISSUE] "\
 labels: issue
 
 ### **Describe the issue**
@@ -17,10 +17,10 @@ Steps to reproduce the behavior:
 1. Run `pyr ...`
 2. See error
 
-**Expected behavior:**  
+**Expected behavior:**\
 What should happen?
 
-**Actual behavior:**  
+**Actual behavior:**\
 What happens instead?
 
 ---
@@ -40,4 +40,5 @@ Add any other context about the problem here (e.g., logs, screenshots).
 
 ---
 
-**Note:** If this is a **feature request**, open a [Discussion](https://github.com/jasenc7/pyr/discussions) instead.
+**Note:** If this is a **feature request**, open a
+[Discussion](https://github.com/jasenc7/pyr/discussions) instead.

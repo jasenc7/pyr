@@ -1,27 +1,27 @@
 ## name: Question
 
-about: Ask a question or request support - we'll see how we can help! 
-title: "[Q] "  
+about: Ask a question or request support - we'll see how we can help! title: "[Q] "\
 labels: question
 
 ### **Question**
 
 Describe what you’re trying to do and what’s happening.
 
-**What are you trying to do?**  
-*(e.g., "I’m trying to use pyr on Windows ARM64...")*
+**What are you trying to do?**\
+_(e.g., "I’m trying to use pyr on Windows ARM64...")_
 
-**What’s happening?**  
-*(e.g., "I get an error when running `pyr init`...")*
+**What’s happening?**\
+_(e.g., "I get an error when running `pyr init`...")_
 
-**What have you tried?**  
-*(e.g., "I checked the docs and ran `pyr --version`...")*
+**What have you tried?**\
+_(e.g., "I checked the docs and ran `pyr --version`...")_
 
 ---
 
 **Example:**
 
-> *"I’m trying to use pyr on Windows ARM64. When I run `pyr init`, I see [error]. I expected [result] but got [result]. I’ve tried [steps]."*
+> _"I’m trying to use pyr on Windows ARM64. When I run `pyr init`, I see [error]. I expected
+> [result] but got [result]. I’ve tried [steps]."_
 
 ---
 
@@ -40,13 +40,13 @@ Add any other context about the problem here (e.g., logs, screenshots).
 
 ---
 
-**Note:** For issues, open an [Issue](https://github.com/jasenc7/pyr/issues). For feature requests, use [Discussions](https://github.com/jasenc7/pyr/discussions).
-
+**Note:** For issues, open an [Issue](https://github.com/jasenc7/pyr/issues). For feature requests,
+use [Discussions](https://github.com/jasenc7/pyr/discussions).
 
 ## name: Question or Support
 
-about: Ask a question or request help with pyr.  
-title: "[Q] "  
+about: Ask a question or request help with pyr.\
+title: "[Q] "\
 labels: question
 
 ### **Your Question**
@@ -55,7 +55,8 @@ Describe what you’re trying to do and what’s happening.
 
 **Example:**
 
-> *"I’m trying to use pyr on Windows ARM64. When I run `pyr init`, I see [error]. I expected [result] but got [result]. I’ve tried [steps]."*
+> _"I’m trying to use pyr on Windows ARM64. When I run `pyr init`, I see [error]. I expected
+> [result] but got [result]. I’ve tried [steps]."_
 
 ---
 
@@ -70,7 +71,8 @@ Describe what you’re trying to do and what’s happening.
 ### **What to Expect**
 
 - **Bugs:** If this is a bug, we’ll convert it to an issue.
-- **Features:** If this is a feature request, we’ll move it to [Discussions](https://github.com/jasenc7/pyr/discussions).
+- **Features:** If this is a feature request, we’ll move it to
+  [Discussions](https://github.com/jasenc7/pyr/discussions).
 - **Questions:** We’ll answer here or redirect to Discussions for broader conversation.
 
 ---

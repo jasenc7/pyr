@@ -1,7 +1,9 @@
-## name: Question
-
-about: Ask a question or request support - we'll see how we can help! title: "[Q] "\
+---
+name: Question or Support
+about: Ask a question or request help with pyr.
+title: "[Q]"
 labels: question
+---
 
 ### **Question**
 

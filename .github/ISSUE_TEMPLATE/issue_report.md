@@ -1,8 +1,9 @@
-## name: Issue Report
-
-about: Report an issue in pyr.\
-title: "[ISSUE] "\
+---
+name: Issue Report
+about: Report an issue in pyr.
+title: "[ISSUE]"
 labels: issue
+---
 
 ### **Describe the issue**
 

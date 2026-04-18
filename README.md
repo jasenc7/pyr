@@ -1,13 +1,13 @@
-# [pyrun.dev](http://pyrun.dev)
+# [pyr](http://pyrun.dev)
 
-**Python without the ceremony.**  
-A project manager that bootstraps its own runtime, manages your venv, and gets out of the way.  
+**Python without the ceremony.**\
+A project manager that bootstraps its own runtime, manages your venv, and gets out of the way.\
 Six commands. One honest lockfile.
 
-[Website](https://pyrun.dev)  
-[Docs](https://pyrun.dev/docs)  
-[App Convention](https://pyrun.dev/app-convention)  
-[Blog: Why pyr?](https://jasencarroll.com/python-project-manager.html)  
+[Website](https://pyrun.dev)\
+[Docs](https://pyrun.dev/docs)\
+[App Convention](https://pyrun.dev/app-convention)\
+[Blog: Why pyr?](https://jasencarroll.com/python-project-manager.html)\
 [Blog: How pyr Works](https://jasencarroll.com/how-pyr-works.html)
 
 ---
@@ -47,11 +47,13 @@ pyr upgrade --python  # Update the managed CPython
 
 ---
 
-## **Why pyrun?**
+## **Why pyr?**
 
 - **Zero system deps:** Bootstraps its own CPython. No brew, no apt, no pyenv.
-- **Six commands:** `init`, `run`, `add`, `remove`, `sync`, `upgrade`. No `activate`, no `pip freeze`.
-- **Honest lockfile:** `pyproject.toml` is the source of truth. `requirements.txt` is a generated, fully-pinned lock.
+- **Six commands:** `init`, `run`, `add`, `remove`, `sync`, `upgrade`. No `activate`, no
+  `pip freeze`.
+- **Honest lockfile:** `pyproject.toml` is the source of truth. `requirements.txt` is a generated,
+  fully-pinned lock.
 - **Self-updating:** `pyr upgrade` updates the tool. `pyr upgrade --python` updates the runtime.
 - **Not written in Python:** The tool that manages Python shouldn’t need Python to install.
 
@@ -78,7 +80,8 @@ myapp/
 ## **How It Works**
 
 - **Bootstrapping:** Downloads a standalone CPython into `~/.pyr/python` on first use.
-- **Venv Management:** Creates a project-local `.venv` from the managed Python. Rebuilds automatically if the Python version changes.
+- **Venv Management:** Creates a project-local `.venv` from the managed Python. Rebuilds
+  automatically if the Python version changes.
 - **Dependency Resolution:** Delegates to `pip`. `requirements.txt` is a generated lockfile.
 - **TOML Surgery:** Edits `pyproject.toml` without destroying comments or formatting.
 - **Self-Upgrades:** Replaces the running binary with the latest release.
@@ -94,7 +97,8 @@ For a deep dive, see:
 
 > The thing that manages Python shouldn’t be Python.
 
-`pyr` is a single compiled binary. It drives `pip` and the standalone CPython runtime; it doesn’t depend on them to install itself.
+`pyr` is a single compiled binary. It drives `pip` and the standalone CPython runtime; it doesn’t
+depend on them to install itself.
 
 ---
 

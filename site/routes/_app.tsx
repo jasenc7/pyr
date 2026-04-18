@@ -14,11 +14,10 @@ export default function App({ Component, url }: PageProps) {
           data-cf-beacon={JSON.stringify({
             token: "69eb3aa5f4874e21a287c7de86cfea48",
           })}
-        >
-        </script>
+        ></script>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>pyrun - Python without the ceremony</title>
+        <title>pyr - Python without the ceremony</title>
         <meta
           name="description"
           content="A project manager that bootstraps its own runtime, manages your venv, and gets out of the way. Six commands. One honest lockfile."
@@ -37,21 +36,21 @@ export default function App({ Component, url }: PageProps) {
       </head>
       <body>
         <nav class="nav">
-          {isHome
-            ? <span class="nav-logo">pyrun</span>
-            : (
-              <a class="nav-logo" href="/">
-                pyrun
+          {isHome ? (
+            <span class="nav-logo">pyr</span>
+          ) : (
+            <a class="nav-logo" href="/">
+              pyr
+            </a>
+          )}
+          <div class="nav-right">
+            {isDocs ? (
+              <span class="nav-link nav-link-current">docs</span>
+            ) : (
+              <a class="nav-link" href="/docs">
+                docs
               </a>
             )}
-          <div class="nav-right">
-            {isDocs
-              ? <span class="nav-link nav-link-current">docs</span>
-              : (
-                <a class="nav-link" href="/docs">
-                  docs
-                </a>
-              )}
             <a
               class="nav-link"
               href="https://github.com/jasenc7/pyr"

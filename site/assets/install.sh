@@ -1,8 +1,9 @@
 #!/bin/sh
-set -e
+set -euo pipefail
 
 REPO="jasenc7/pyr"
 INSTALL_DIR="${PYR_HOME:-$HOME/.pyr}/bin"
+PYTHON_DIR="${PYR_HOME:-$HOME/.pyr}/python/bin"
 
 main() {
   command -v unzip >/dev/null 2>&1 || { echo "unzip is required"; exit 1; }
@@ -41,11 +42,12 @@ main() {
 
   # check PATH
   case ":$PATH:" in
-    *":${INSTALL_DIR}:"*) ;;
+    *":${INSTALL_DIR}:"*":${PYTHON_DIR}:"*) ;;
+    *":${PYTHON_DIR}:"*":${INSTALL_DIR}:"*) ;;
     *)
       echo ""
       echo "add to your shell profile:"
-      echo "  export PATH=\"${INSTALL_DIR}:\$PATH\""
+      echo "  export PATH=\"${INSTALL_DIR}:${PYTHON_DIR}:\$PATH\""
       ;;
   esac
 }

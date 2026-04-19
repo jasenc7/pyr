@@ -102,6 +102,26 @@ depend on them to install itself.
 
 ---
 
+## **Dogfooding**
+
+This repo uses `pyr` to manage its own Python tooling — even though the project itself is
+TypeScript/Deno.
+
+[`scripts/generate-og`](./scripts/generate-og) generates the OG image for pyrun.dev using Pillow.
+It's a self-contained Python sub-app living inside a Deno repo:
+
+```sh
+pyr init generate-og
+cd generate-og
+pyr add pillow
+pyr run
+```
+
+The `.gitignore` that ships with `pyr init` makes it safe to bury Python sub-apps anywhere in a
+repo, regardless of the primary language.
+
+---
+
 ## **Community & Support**
 
 - **Discussions:** [GitHub Discussions](https://github.com/jasenc7/pyr/discussions)

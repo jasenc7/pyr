@@ -22,6 +22,24 @@ export default function App({ Component, url }: PageProps) {
           name="description"
           content="A project manager that bootstraps its own runtime, manages your venv, and gets out of the way. Six commands. One honest lockfile."
         />
+        <meta property="og:title" content="pyr — Python without the ceremony" />
+        <meta
+          property="og:description"
+          content="A project manager that bootstraps its own runtime, manages your venv, and gets out of the way. Six commands. One honest lockfile."
+        />
+        <meta property="og:url" content="https://pyrun.dev" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://pyrun.dev/og.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content="pyr — Python without the ceremony"
+        />
+        <meta
+          name="twitter:description"
+          content="A project manager that bootstraps its own runtime, manages your venv, and gets out of the way. Six commands. One honest lockfile."
+        />
+        <meta name="twitter:image" content="https://pyrun.dev/og.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"

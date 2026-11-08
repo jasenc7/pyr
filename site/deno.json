@@ -1,0 +1,24 @@
+{
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "check": "deno fmt --check && deno lint && deno check **/*.ts **/*.tsx",
+    "dev": "vite",
+    "build": "vite build",
+    "start": "deno serve -A _fresh/server.js",
+    "preview": "deno serve -A _fresh/server.js"
+  },
+  "imports": {
+    "preact": "npm:preact@^10.28.3",
+    "preact/hooks": "npm:preact@^10.28.3/hooks",
+    "preact/jsx-runtime": "npm:preact@^10.28.3/jsx-runtime",
+    "preact/jsx-dev-runtime": "npm:preact@^10.28.3/jsx-dev-runtime",
+    "preact/": "npm:preact@^10.28.3/",
+    "@preact/signals": "npm:@preact/signals@^2.7.1",
+    "$gfm": "jsr:@deno/gfm@^0.12.0",
+    "fresh": "jsr:@fresh/core@^2.2.2",
+    "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@^1.0.8",
+    "vite": "npm:vite@^7.1.3"
+  },
+  "compilerOptions": { "jsx": "react-jsx", "jsxImportSource": "preact" },
+  "exclude": ["**/_fresh/*", "node_modules/"]
+}

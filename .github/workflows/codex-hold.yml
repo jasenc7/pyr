@@ -1,0 +1,74 @@
+name: Codex hold
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  issues: read
+  pull-requests: read
+
+jobs:
+  hold:
+    name: hold
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const owner = context.repo.owner, repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+            const n = pr.number;
+            const BOTS = new Set(['chatgpt-codex-connector[bot]']);
+            const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+            // Codex reviews on open only, so the clocks are anchored to when
+            // the PR was opened, not to when this run started. A synchronize
+            // run therefore keeps holding while the open-time review is still
+            // outstanding, and a push cannot hand the new head a green check
+            // before Codex has had its window; on a PR older than the hold
+            // window it releases at once, as before.
+            const opened = Date.parse(pr.created_at);
+            const GRACE = opened + 5 * 60 * 1000;
+            const HOLD = opened + 25 * 60 * 1000;
+            let sawEyes = false;
+            core.info(`PR opened ${Math.round((Date.now() - opened) / 1000)}s ago (${context.payload.action}).`);
+
+            while (true) {
+              const reactions = await github.paginate(
+                github.rest.reactions.listForIssue,
+                { owner, repo, issue_number: n, per_page: 100 });
+              const byBot = reactions.filter(r => BOTS.has(r.user?.login));
+
+              if (byBot.some(r => r.content === '+1')) {
+                core.info('Codex cleared this PR (👍). Releasing.');
+                return;
+              }
+
+              const [ic, rc, rv] = await Promise.all([
+                github.paginate(github.rest.issues.listComments,
+                  { owner, repo, issue_number: n, per_page: 100 }),
+                github.paginate(github.rest.pulls.listReviewComments,
+                  { owner, repo, pull_number: n, per_page: 100 }),
+                github.paginate(github.rest.pulls.listReviews,
+                  { owner, repo, pull_number: n, per_page: 100 }),
+              ]);
+              if ([...ic, ...rc, ...rv].some(c => BOTS.has(c.user?.login))) {
+                core.info('Codex left feedback. Releasing, thread resolution now gates.');
+                return;
+              }
+
+              if (byBot.some(r => r.content === 'eyes')) sawEyes = true;
+
+              if (!sawEyes && Date.now() > GRACE) {
+                core.info('No 👀 within 5 minutes, Codex is not watching. Releasing.');
+                return;
+              }
+              if (sawEyes && Date.now() > HOLD) {
+                core.warning('Codex acknowledged (👀) but gave no verdict in 25 minutes. Releasing, review capacity may be exhausted.');
+                return;
+              }
+
+              await sleep(15000);
+            }

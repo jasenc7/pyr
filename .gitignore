@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.DS_Store
+.deno/
+.venv/
+dist/
+*.egg-info/
+site/node_modules/
+site/_fresh/

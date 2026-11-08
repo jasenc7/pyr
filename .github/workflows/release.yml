@@ -1,0 +1,236 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.9.8
+      - run: bash scripts/verify.sh
+
+  build:
+    needs: verify
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: ARM64
+            target: aarch64-apple-darwin
+            asset: pyr-darwin-aarch64
+            executable: pyr
+          - runner: macos-15-intel
+            arch: X64
+            target: x86_64-apple-darwin
+            asset: pyr-darwin-x86_64
+            executable: pyr
+          - runner: ubuntu-24.04-arm
+            arch: ARM64
+            target: aarch64-unknown-linux-gnu
+            asset: pyr-linux-aarch64
+            executable: pyr
+          - runner: ubuntu-24.04
+            arch: X64
+            target: x86_64-unknown-linux-gnu
+            asset: pyr-linux-x86_64
+            executable: pyr
+          - runner: windows-11-arm
+            arch: ARM64
+            target: aarch64-pc-windows-msvc
+            asset: pyr-windows-aarch64
+            executable: pyr.exe
+          - runner: windows-latest
+            arch: X64
+            target: x86_64-pc-windows-msvc
+            asset: pyr-windows-x86_64
+            executable: pyr.exe
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.9.8
+      - name: Compile on the matching architecture
+        shell: bash
+        env:
+          EXPECTED_ARCH: ${{ matrix.arch }}
+          TARGET: ${{ matrix.target }}
+          EXECUTABLE: ${{ matrix.executable }}
+        run: |
+          set -euo pipefail
+          test "$RUNNER_ARCH" = "$EXPECTED_ARCH"
+          deno compile -A --target "$TARGET" --output "$EXECUTABLE" main.ts
+      - name: Smoke-test Unix binary
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          export PYR_HOME="$RUNNER_TEMP/pyr-home"
+          test "$("$GITHUB_WORKSPACE/pyr" --version)" = "${TAG#v}"
+          "$GITHUB_WORKSPACE/pyr" --help >/dev/null
+          mkdir -p "$RUNNER_TEMP/pyr-smoke"
+          cd "$RUNNER_TEMP/pyr-smoke"
+          "$GITHUB_WORKSPACE/pyr" init smoke
+          cd smoke
+          "$GITHUB_WORKSPACE/pyr" run | grep -F 'hello world'
+      - name: Smoke-test Windows binary
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          TAG: ${{ github.ref_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:PYR_HOME = Join-Path $env:RUNNER_TEMP 'pyr-home'
+          $exe = Join-Path $env:GITHUB_WORKSPACE 'pyr.exe'
+          $version = & $exe --version
+          if ($LASTEXITCODE -ne 0 -or $version -ne $env:TAG.Substring(1)) { throw 'version mismatch' }
+          & $exe --help | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw 'help failed' }
+          $work = Join-Path $env:RUNNER_TEMP 'pyr-smoke'
+          New-Item -ItemType Directory -Path $work | Out-Null
+          Set-Location $work
+          & $exe init smoke
+          if ($LASTEXITCODE -ne 0) { throw 'init failed' }
+          Set-Location smoke
+          $output = & $exe run
+          if ($LASTEXITCODE -ne 0 -or $output -notcontains 'hello world') { throw 'run failed' }
+      - name: Package Unix binary
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          ASSET: ${{ matrix.asset }}
+        run: zip -q "$ASSET.zip" pyr
+      - name: Package Windows binary
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          ASSET: ${{ matrix.asset }}
+        run: Compress-Archive -LiteralPath pyr.exe -DestinationPath "$env:ASSET.zip"
+      - name: Verify Unix release archive
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          ASSET: ${{ matrix.asset }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          unzip -q "$ASSET.zip" -d "$RUNNER_TEMP/archive-check"
+          cmp pyr "$RUNNER_TEMP/archive-check/pyr"
+          test "$("$RUNNER_TEMP/archive-check/pyr" --version)" = "${TAG#v}"
+      - name: Verify Windows release archive
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          ASSET: ${{ matrix.asset }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archive = Join-Path $env:GITHUB_WORKSPACE "$env:ASSET.zip"
+          $dir = Join-Path $env:RUNNER_TEMP 'archive-check'
+          Expand-Archive -LiteralPath $archive -DestinationPath $dir
+          $exe = Join-Path $dir 'pyr.exe'
+          if ((Get-FileHash -LiteralPath pyr.exe).Hash -ne (Get-FileHash -LiteralPath $exe).Hash) { throw 'archive mismatch' }
+          $version = & $exe --version
+          if ($LASTEXITCODE -ne 0 -or $version -ne $env:TAG.Substring(1)) { throw 'archive version mismatch' }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}.zip
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          merge-multiple: true
+      - name: Publish verified artifacts
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          assets=(
+            pyr-darwin-aarch64.zip pyr-darwin-x86_64.zip
+            pyr-linux-aarch64.zip pyr-linux-x86_64.zip
+            pyr-windows-aarch64.zip pyr-windows-x86_64.zip
+          )
+          for asset in "${assets[@]}"; do test -s "$asset"; done
+          sha256sum "${assets[@]}" > SHA256SUMS
+          sha256sum -c SHA256SUMS
+          gh release create "$TAG" --verify-tag --title "$TAG" \
+            --notes "Native builds for macOS, Linux and Windows, with SHA-256 checksums." \
+            "${assets[@]}" SHA256SUMS
+
+  verify-installers:
+    needs: publish
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [
+          macos-15,
+          macos-15-intel,
+          ubuntu-24.04-arm,
+          ubuntu-24.04,
+          windows-11-arm,
+          windows-latest,
+        ]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Run the live POSIX installer
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          export PYR_HOME="$RUNNER_TEMP/pyr-live"
+          curl --proto '=https' --tlsv1.2 -fsSL https://pyrun.dev/install.sh | sh
+          test "$("$PYR_HOME/bin/pyr" --version)" = "${TAG#v}"
+      - name: Run the live Windows PowerShell installer
+        if: runner.os == 'Windows'
+        shell: powershell
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:PYR_HOME = Join-Path $env:RUNNER_TEMP 'pyr-live'
+          Invoke-RestMethod https://pyrun.dev/install.ps1 | Invoke-Expression
+          $exe = Join-Path $env:PYR_HOME 'bin\pyr.exe'
+          $version = & $exe --version
+          if ($LASTEXITCODE -ne 0 -or $version -ne $env:TAG.Substring(1)) { throw 'version mismatch' }
+          $reader = New-Object System.IO.BinaryReader([System.IO.File]::OpenRead($exe))
+          try {
+            $reader.BaseStream.Seek(0x3c, [System.IO.SeekOrigin]::Begin) | Out-Null
+            $offset = $reader.ReadInt32()
+            $reader.BaseStream.Seek($offset + 4, [System.IO.SeekOrigin]::Begin) | Out-Null
+            $machine = $reader.ReadUInt16()
+          } finally {
+            $reader.Close()
+          }
+          $expected = if ($env:RUNNER_ARCH -eq 'ARM64') { 0xAA64 } else { 0x8664 }
+          if ($machine -ne $expected) { throw "installed the wrong Windows architecture: $machine" }

@@ -1,0 +1,19 @@
+{
+  "name": "pyr",
+  "version": "0.1.2",
+  "exports": "./lib.ts",
+  "exclude": ["site", ".deno"],
+  "fmt": {
+    "lineWidth": 100,
+    "exclude": ["site"]
+  },
+  "lint": {
+    "exclude": ["site"],
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "tasks": {
+    "test": "deno test -A"
+  }
+}

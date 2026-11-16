@@ -143,13 +143,17 @@ curl --proto '=https' --tlsv1.2 -fsSLO "$base/SHA256SUMS"
 curl --proto '=https' --tlsv1.2 -fsSLO "$base/$asset"
 expected=$(awk -v n="$asset" '$2 == n || $2 == "*" n { print $1 }' SHA256SUMS)
 actual=$( (sha256sum "$asset" 2>/dev/null || shasum -a 256 "$asset") | awk '{ print $1 }')
-if [ -n "$expected" ] && [ "$expected" = "$actual" ]; then
-  unzip -q "$asset" && ./pyr --version   # must print the tag without its leading v
+if [ -n "$expected" ] && [ "$expected" = "$actual" ] && unzip -q "$asset" &&
+  version=$(./pyr --version) && [ "$version" = "${tag#v}" ]; then
+  mv ./pyr "$(command -v pyr)"
 else
-  echo "checksum mismatch: stop"
+  echo "verification failed: CLI not replaced"
 fi
-mv ./pyr "$(command -v pyr)"             # only after the version check above passed
 ```
+
+The replacement runs only when the checksum matches, the candidate runs successfully, and it reports
+exactly the selected version, mirroring the checksum and version checks `pyr upgrade` applies before
+it replaces itself.
 
 Native Windows (PowerShell):
 
@@ -164,11 +168,18 @@ Invoke-WebRequest "$base/SHA256SUMS" -OutFile "$tmp\SHA256SUMS" -UseBasicParsing
 Invoke-WebRequest "$base/$asset" -OutFile "$tmp\$asset" -UseBasicParsing
 $line = Get-Content "$tmp\SHA256SUMS" | Where-Object { $_ -match "^[0-9A-Fa-f]{64}\s+\*?$([regex]::Escape($asset))$" }
 $expected = if ($line) { ($line -split '\s+')[0] } else { $null }
-if (-not $expected -or (Get-FileHash -Algorithm SHA256 "$tmp\$asset").Hash -ine $expected) { throw 'checksum mismatch' }
-Expand-Archive "$tmp\$asset" -DestinationPath $tmp
-& "$tmp\pyr.exe" --version            # must print the tag without its leading v
-Move-Item "$tmp\pyr.exe" (Get-Command pyr).Source -Force
+$ok = $false
+if ($expected -and (Get-FileHash -Algorithm SHA256 "$tmp\$asset").Hash -ieq $expected) {
+  Expand-Archive "$tmp\$asset" -DestinationPath $tmp
+  $version = & "$tmp\pyr.exe" --version
+  $ok = ($LASTEXITCODE -eq 0) -and ($version -eq $tag.Substring(1))
+}
+if ($ok) { Move-Item "$tmp\pyr.exe" (Get-Command pyr).Source -Force } else { Write-Error 'verification failed: CLI not replaced' }
 ```
+
+As above, `pyr.exe` is replaced only after the checksum, a successful run and an exact version
+match. Each check is a condition of the block that moves the file, so pasting the lines one at a
+time cannot skip one.
 
 After rolling back, do not run `pyr upgrade` or the installer on that machine until the newer
 release is fixed: both move straight back to the release marked latest.

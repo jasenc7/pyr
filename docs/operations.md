@@ -172,14 +172,15 @@ $ok = $false
 if ($expected -and (Get-FileHash -Algorithm SHA256 "$tmp\$asset").Hash -ieq $expected) {
   Expand-Archive "$tmp\$asset" -DestinationPath $tmp
   $version = & "$tmp\pyr.exe" --version
-  $ok = ($LASTEXITCODE -eq 0) -and ($version -eq $tag.Substring(1))
+  $ok = ($LASTEXITCODE -eq 0) -and ($version -is [string]) -and ($version -ceq $tag.Substring(1))
 }
 if ($ok) { Move-Item "$tmp\pyr.exe" (Get-Command pyr).Source -Force } else { Write-Error 'verification failed: CLI not replaced' }
 ```
 
 As above, `pyr.exe` is replaced only after the checksum, a successful run and an exact version
-match. Each check is a condition of the block that moves the file, so pasting the lines one at a
-time cannot skip one.
+match: the output must be one line (`-is [string]`; several lines arrive as an array) equal to the
+selected version, compared case-sensitively (`-ceq`). Each check is a condition of the block that
+moves the file, so pasting the lines one at a time cannot skip one.
 
 After rolling back, do not run `pyr upgrade` or the installer on that machine until the newer
 release is fixed: both move straight back to the release marked latest.

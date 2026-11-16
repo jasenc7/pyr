@@ -41,9 +41,9 @@ WSL is Linux. Run `install.sh` inside WSL. It installs a Linux executable under 
 irm https://pyrun.dev/install.ps1 | iex
 ```
 
-Installs `pyr.exe` into `%USERPROFILE%\.pyr\bin` and prints the command that adds
-`%USERPROFILE%\.pyr\bin` and `%USERPROFILE%\.pyr\python` to the user `PATH`. Git Bash is native
-Windows: use `install.ps1` from PowerShell. `install.sh` refuses to run under MSYS or Cygwin.
+Installs `pyr.exe` into `$PYR_HOME\bin` (default `%USERPROFILE%\.pyr\bin`) and prints the command
+that adds `$PYR_HOME\bin` and `$PYR_HOME\python` to the user `PATH`. Git Bash is native Windows: use
+`install.ps1` from PowerShell. `install.sh` refuses to run under MSYS or Cygwin.
 
 ### Keep WSL and native Windows apart
 
@@ -98,7 +98,8 @@ cat "${PYR_HOME:-$HOME/.pyr}/python/.build"
 ```
 
 ```powershell
-Get-Content "$env:USERPROFILE\.pyr\python\.build"
+$pyrHome = if ($env:PYR_HOME) { $env:PYR_HOME } else { Join-Path $env:USERPROFILE '.pyr' }
+Get-Content "$pyrHome\python\.build"
 ```
 
 Runtimes installed before `.build` existed have only `.version`. They refresh once on their next
@@ -226,8 +227,9 @@ cp "${PYR_HOME:-$HOME/.pyr}/python/.version" .venv/.pyr-python
 ```
 
 ```powershell
-& "$env:USERPROFILE\.pyr\python\python.exe" -m venv .venv
-Copy-Item "$env:USERPROFILE\.pyr\python\.version" .venv\.pyr-python
+$pyrHome = if ($env:PYR_HOME) { $env:PYR_HOME } else { Join-Path $env:USERPROFILE '.pyr' }
+& "$pyrHome\python\python.exe" -m venv .venv
+Copy-Item "$pyrHome\python\.version" .venv\.pyr-python
 .venv\Scripts\pip.exe install -r requirements.txt
 ```
 

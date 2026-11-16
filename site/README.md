@@ -55,8 +55,9 @@ Recorded in this repository:
 Not recorded in this repository, and needed before a site change:
 
 - The hosting provider and the project or app that serves `pyrun.dev`.
-- What deploys the site, and from which branch or event. No workflow in
-  `.github/workflows/` builds or deploys it.
+- What deploys the site, and from which branch or event. CI builds it (see
+  above), and so does the release workflow's `verify` job, but no workflow in
+  `.github/workflows/` deploys it.
 - Who operates the hosting account and the `pyrun.dev` DNS.
 - Which entry point production runs (for example `_fresh/server.js`).
 

@@ -24,6 +24,7 @@
       "walkthrough": [2],
       "lanes": ["windows", "unix"],
       "cases": [
+        "scripts/readme-smoke.ps1 — edit block, explicit sync, changed app and lock, runtime version (Windows)",
         "scripts/clone_smoke.py — smoke, edit manifest to require 2.0 after locked restore",
         "python_install_test.ts — same CPython build uses one GET and no download",
         "python_install_test.ts — restored interpreter runs an app after failed promotion"

@@ -21,20 +21,33 @@ $checksum = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash
 "$checksum  $asset" | Set-Content -Encoding ascii (Join-Path $package 'SHA256SUMS')
 
 $wheelDir = Join-Path $package 'wheels'
-python -m pip download --disable-pip-version-check --only-binary=:all: --no-deps --dest $wheelDir idna==3.10
-if ($LASTEXITCODE) { throw 'failed to stage sample wheel' }
-$wheel = Join-Path $wheelDir 'idna-3.10-py3-none-any.whl'
-if ((Get-FileHash $wheel -Algorithm SHA256).Hash -ne '946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3') {
-    throw 'unexpected sample wheel'
+$wheels = @{
+    '3.10' = '946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3'
+    '3.11' = '771a87f49d9defaf64091e6e6fe9c18d4833f140bd19464795bc32d966ca37ea'
 }
-# Provision an offline interpreter fixture before hiding both developer tools.
-$runtime = Join-Path $package 'python'
-python -m venv --without-pip $runtime
-if ($LASTEXITCODE) { throw 'failed to stage CPython' }
-Copy-Item "$runtime\Scripts\python.exe" "$runtime\python.exe"
-& "$runtime\python.exe" -c "import platform;print(platform.python_version())" | Set-Content -Encoding ascii "$runtime\.version"
-
-powershell -NoProfile -NonInteractive -File ./scripts/readme-smoke.ps1 -Package $package
-if ($LASTEXITCODE) { throw 'README walkthrough failed' }
+foreach ($pin in $wheels.Keys) {
+    python -m pip download --disable-pip-version-check --only-binary=:all: --no-deps --dest $wheelDir "idna==$pin"
+    if ($LASTEXITCODE) { throw 'failed to stage sample wheel' }
+    $wheel = Join-Path $wheelDir "idna-$pin-py3-none-any.whl"
+    if ((Get-FileHash $wheel -Algorithm SHA256).Hash -ne $wheels[$pin]) { throw 'unexpected wheel' }
+}
+if (!(Get-Command openssl -ErrorAction SilentlyContinue)) {
+    $env:Path += ";$env:ProgramFiles\Git\usr\bin"
+}
+$fixture = Start-Process -FilePath (Get-Command python).Source -ArgumentList @(
+    'scripts/runtime_fixture.py', ('"{0}"' -f $package)
+) -NoNewWindow -PassThru
+try {
+    $ready = Join-Path $package 'port'
+    for ($i = 0; $i -lt 120 -and !(Test-Path $ready); $i++) {
+        if ($fixture.HasExited) { throw "runtime fixture exited with $($fixture.ExitCode)" }
+        Start-Sleep -Milliseconds 250
+    }
+    if (!(Test-Path $ready)) { throw 'runtime fixture did not start' }
+    powershell -NoProfile -NonInteractive -File ./scripts/readme-smoke.ps1 -Package $package
+    if ($LASTEXITCODE) { throw 'README walkthrough failed' }
+} finally {
+    if (!$fixture.HasExited) { $fixture.Kill(); $fixture.WaitForExit() }
+}
 python scripts/clone_smoke.py $exe
 if ($LASTEXITCODE) { throw 'clone smoke failed' }

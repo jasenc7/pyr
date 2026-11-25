@@ -120,6 +120,21 @@ declaration and can update pins. In a missing venv, sync consumes the committed 
 `pyr upgrade --python [X.Y.Z+BUILD]` changes the shared interpreter after checking the candidate.
 The exact-build and rollback procedure is in [operations](docs/operations.md).
 
+To observe a deliberate dependency update separately, edit the sample declaration and sync:
+
+<!-- walkthrough:edit -->
+
+```powershell
+(Get-Content pyproject.toml -Raw).Replace('idna==3.10', 'idna==3.11') | Set-Content -Encoding ascii pyproject.toml
+pyr sync
+pyr run
+Get-Content requirements.txt
+Get-Content "$env:PYR_HOME\python\.version"
+```
+
+Expect `3.11` from the app, `idna==3.11` in the lock, and a separate CPython version stamp. A
+dependency sync changes this app's packages. Shared interpreter updates use `pyr upgrade --python`.
+
 Clean up in the same disposable session and close PowerShell:
 
 <!-- walkthrough:cleanup -->

@@ -28,10 +28,11 @@ after the tests pass, so they identify the tested bytes even if the branch moves
 [CI runs](https://github.com/jasenc7/pyr/actions/workflows/ci.yml).
 
 The Windows walkthrough uses a disposable shell profile, the candidate's canonical installer and
-release ZIP, a staged CPython fixture and an offline wheel. Deno and system Python are absent from
-the user PATH. The runtime promotion test substitutes upstream responses and forces a failed
-filesystem promotion, then executes real CPython from the recovered location. These are automated
-checks. Human walkthrough completion and verification of a publicly released candidate are open
-until performed. At release, the tagged workflow tests the Windows ZIP, records its digest and
-publishes `SHA256SUMS`. Match the release asset to that digest and tag before citing release
-evidence.
+release ZIP, an offline wheel directory and a loopback upstream fixture. The profile starts with no
+Pyr home; the CLI downloads, checks, extracts and probes a real CPython fixture before creating the
+app venv. Deno and system Python are absent from the user PATH. The runtime promotion test
+substitutes upstream responses and forces a failed filesystem promotion, then executes real CPython
+from the recovered location. These are automated checks. Human walkthrough completion and
+verification of a publicly released candidate are open until performed. At release, the tagged
+workflow tests the Windows ZIP, records its digest and publishes `SHA256SUMS`. Match the release
+asset to that digest and tag before citing release evidence.

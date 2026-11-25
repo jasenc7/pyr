@@ -6,6 +6,7 @@ deno fmt --check
 deno lint
 deno check main.ts lib.ts
 CI=true deno test -A
+python3 scripts/clone_smoke.py
 
 (
   cd site

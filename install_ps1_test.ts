@@ -2,7 +2,7 @@ import { assert, assertMatch } from "https://deno.land/std@0.224.0/assert/mod.ts
 
 const incorrectOwnerRepository = "axiomlayer/pyr";
 
-Deno.test("Windows installer selects a published asset and handles old ARM releases", async () => {
+Deno.test("Windows installer requires an x64 host and selects the x64 release asset", async () => {
   const script = await Deno.readTextFile(
     new URL("./site/assets/install.ps1", import.meta.url),
   );
@@ -12,10 +12,8 @@ Deno.test("Windows installer selects a published asset and handles old ARM relea
     "installer must not target the private placeholder",
   );
   assertMatch(script, /\$Release\.assets/);
-  assertMatch(script, /windows-aarch64/);
-  assertMatch(script, /windows-x86_64/);
-  assertMatch(script, /no native Windows ARM64 asset/);
-  assertMatch(script, /Windows x86_64 emulation/);
+  assertMatch(script, /\$nativeArch -ne "AMD64"/);
+  assertMatch(script, /pyr-windows-x86_64\.zip/);
   assertMatch(script, /SHA256SUMS/);
   assertMatch(script, /does not contain pyr\.exe at its archive root/);
 

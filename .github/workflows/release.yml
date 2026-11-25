@@ -46,11 +46,6 @@ jobs:
             target: x86_64-unknown-linux-gnu
             asset: pyr-linux-x86_64
             executable: pyr
-          - runner: windows-11-arm
-            arch: ARM64
-            target: aarch64-pc-windows-msvc
-            asset: pyr-windows-aarch64
-            executable: pyr.exe
           - runner: windows-latest
             arch: X64
             target: x86_64-pc-windows-msvc
@@ -150,6 +145,15 @@ jobs:
           if ((Get-FileHash -LiteralPath pyr.exe).Hash -ne (Get-FileHash -LiteralPath $exe).Hash) { throw 'archive mismatch' }
           $version = & $exe --version
           if ($LASTEXITCODE -ne 0 -or $version -ne $env:TAG.Substring(1)) { throw 'archive version mismatch' }
+      - name: Verify the release ZIP against the Windows walkthrough and rollback requirements
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          ./scripts/windows-smoke.ps1 -ReleaseArchive ./pyr-windows-x86_64.zip
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          deno test -A python_install_test.ts
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python scripts/record_evidence.py windows ./pyr-windows-x86_64.zip
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ matrix.asset }}
@@ -176,7 +180,7 @@ jobs:
           assets=(
             pyr-darwin-aarch64.zip pyr-darwin-x86_64.zip
             pyr-linux-aarch64.zip pyr-linux-x86_64.zip
-            pyr-windows-aarch64.zip pyr-windows-x86_64.zip
+            pyr-windows-x86_64.zip
           )
           for asset in "${assets[@]}"; do test -s "$asset"; done
           sha256sum "${assets[@]}" > SHA256SUMS
@@ -196,12 +200,14 @@ jobs:
           macos-15-intel,
           ubuntu-24.04-arm,
           ubuntu-24.04,
-          windows-11-arm,
           windows-latest,
         ]
     runs-on: ${{ matrix.runner }}
     steps:
-      - name: Run the live POSIX installer
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Run the tagged POSIX installer
         if: runner.os != 'Windows'
         shell: bash
         env:
@@ -209,9 +215,9 @@ jobs:
         run: |
           set -euo pipefail
           export PYR_HOME="$RUNNER_TEMP/pyr-live"
-          curl --proto '=https' --tlsv1.2 -fsSL https://pyrun.dev/install.sh | sh
+          sh site/assets/install.sh
           test "$("$PYR_HOME/bin/pyr" --version)" = "${TAG#v}"
-      - name: Run the live Windows PowerShell installer
+      - name: Run the tagged Windows PowerShell installer
         if: runner.os == 'Windows'
         shell: powershell
         env:
@@ -219,7 +225,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $env:PYR_HOME = Join-Path $env:RUNNER_TEMP 'pyr-live'
-          Invoke-RestMethod https://pyrun.dev/install.ps1 | Invoke-Expression
+          & ./site/assets/install.ps1
           $exe = Join-Path $env:PYR_HOME 'bin\pyr.exe'
           $version = & $exe --version
           if ($LASTEXITCODE -ne 0 -or $version -ne $env:TAG.Substring(1)) { throw 'version mismatch' }
@@ -232,5 +238,4 @@ jobs:
           } finally {
             $reader.Close()
           }
-          $expected = if ($env:RUNNER_ARCH -eq 'ARM64') { 0xAA64 } else { 0x8664 }
-          if ($machine -ne $expected) { throw "installed the wrong Windows architecture: $machine" }
+          if ($machine -ne 0x8664) { throw "installed the wrong Windows architecture: $machine" }

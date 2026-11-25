@@ -472,6 +472,34 @@ Deno.test("Python installation preserves the live runtime until replacement is v
       );
       await assertPreserved();
     });
+    await t.step("restored interpreter runs an app after failed promotion", async () => {
+      await reset(null);
+      const runtime = `${runtimeHome}/python`;
+      const baseline = new OriginalCommand(isWindows() ? "python" : "python3", {
+        args: ["-m", "venv", "--without-pip", runtime],
+      });
+      assertEquals((await baseline.output()).success, true);
+      if (isWindows()) await Deno.copyFile(`${runtime}/Scripts/python.exe`, managedPython());
+      const runPython = async () => {
+        const result = await new OriginalCommand(managedPython(), {
+          args: ["-I", "-c", "import platform, venv, ensurepip; print(platform.python_version())"],
+        }).output();
+        assertEquals(result.success, true, new TextDecoder().decode(result.stderr));
+        return new TextDecoder().decode(result.stdout).trim();
+      };
+      const before = await runPython();
+      await Deno.writeTextFile(`${runtime}/.version`, before);
+      await Deno.writeTextFile(`${runtime}/.build`, `${before}+20260825`);
+      failPromotion = true;
+      await assertRejects(() => upgrade(["--python", build]), Deno.errors.PermissionDenied);
+      assertEquals(await runPython(), before);
+      assertEquals(await managedPythonBuild(), `${before}+20260825`);
+      const app = `${root}/rollback-app.py`;
+      await Deno.writeTextFile(app, "print('runtime recovered')\n");
+      const result = await new OriginalCommand(managedPython(), { args: [app] }).output();
+      assertEquals(result.success, true);
+      assertEquals(new TextDecoder().decode(result.stdout).trim(), "runtime recovered");
+    });
     await t.step("failed rollback preserves the recovery tree", async () => {
       await reset();
       failPromotion = true;

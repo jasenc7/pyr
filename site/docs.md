@@ -21,7 +21,7 @@ pyr upgrade --python 3.14.7+20260901  # install one exact upstream build
 ### macOS / Linux
 
 ```sh
-curl -fsSL https://pyrun.dev/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/jasenc7/pyr/main/site/assets/install.sh | sh
 ```
 
 The script drops `pyr` into `~/.pyr/bin/`. Add that to your `PATH` - the
@@ -36,22 +36,19 @@ executables and venv layouts are platform-specific.
 In PowerShell:
 
 ```powershell
-irm https://pyrun.dev/install.ps1 | iex
+irm https://raw.githubusercontent.com/jasenc7/pyr/main/site/assets/install.ps1 | iex
 ```
 
 This installs `pyr.exe` into `%USERPROFILE%\.pyr\bin\`. Add that directory to
 your user `PATH` if it isn't already - the installer prints the exact command.
-On Windows ARM64, it uses the native ARM64 ZIP when the latest release has one;
-older releases without that asset fall back to the x86_64 ZIP under Windows
-emulation and print a warning.
+Windows releases target x64 Intel and AMD PCs.
 
 Git Bash counts as native Windows. Use `install.ps1` from PowerShell rather than
 piping `install.sh` to Bash, then restart Git Bash to pick up the Windows user
 `PATH`. Native Pyr prefers `%USERPROFILE%` over Git Bash's `$HOME`; use an
 explicit Windows-native `PYR_HOME` to override it.
 
-Or, manually: download the latest `pyr-windows-x86_64.zip` (or
-`pyr-windows-aarch64.zip` on ARM64) from
+Or, manually: download the latest `pyr-windows-x86_64.zip` from
 [releases](https://github.com/jasenc7/pyr/releases/latest), unzip it, and put
 `pyr.exe` somewhere on your `PATH`.
 
@@ -82,9 +79,10 @@ dependencies = [       anyio==4.3.0
 
 `pyr add httpx` and `pyr remove httpx` both edit `pyproject.toml` then call
 `pyr sync` under the hood. `pyr sync` resolves the top-level deps via pip,
-prunes anything no longer needed, and rewrites the lock. `pyr run` auto-syncs if
-`pyproject.toml` is newer than the lock - so hand-edits to
-`[project].dependencies` followed by `pyr run` Just Work.
+prunes anything no longer needed, and rewrites the lock in an existing venv. In
+a fresh clone, `pyr sync` or `pyr run` first recreates the missing venv from the
+committed lock. Repeated runs keep those pins until the declaration changes. An
+explicit sync in an existing venv can move pins forward.
 
 ## Commands
 
@@ -94,7 +92,7 @@ prunes anything no longer needed, and rewrites the lock. `pyr run` auto-syncs if
 | `pyr run [-- args]`              | Run `app/main.py` in the venv with `PYTHONPATH=.`. Args after `--` go to python.      |
 | `pyr add <pkg>...`               | Add packages to `pyproject.toml [project].dependencies`, then sync.                   |
 | `pyr remove <pkg>...`            | Remove packages from `pyproject.toml`, then sync.                                     |
-| `pyr sync`                       | Reconcile the venv and lock with `pyproject.toml`. Idempotent.                        |
+| `pyr sync`                       | Restore a missing venv from the lock, or re-resolve an existing venv.                 |
 | `pyr upgrade`                    | Update the pyr binary from the latest GitHub release.                                 |
 | `pyr upgrade --python [VERSION]` | Update managed CPython, optionally pinning `X.Y.Z[+BUILD]`.                           |
 | `pyr help [cmd]`                 | Top-level usage, or per-command details.                                              |

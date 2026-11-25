@@ -30,9 +30,10 @@ The six commands are `init`, `run`, `add`, `remove`, `sync` and `upgrade` (`COMM
 The compiled executable is standalone: its graph is local source plus Deno and Node built-ins, and
 it does not use an installed Deno, Node, npm or system Python.
 
-Each installer exists once. The site build inlines `site/assets/install.sh` and
-`site/assets/install.ps1` through the `inline-raw-files` plugin in `site/vite.config.ts`, and the
-two routes return them unchanged.
+The canonical installers are the scripts in `site/assets/` in the personal repository. The README
+uses their GitHub raw URLs. Each installer exists once. The site build inlines
+`site/assets/install.sh` and `site/assets/install.ps1` through the `inline-raw-files` plugin in
+`site/vite.config.ts`, and the two routes return them unchanged.
 
 ## Release assets
 

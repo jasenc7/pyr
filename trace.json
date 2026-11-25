@@ -15,7 +15,7 @@
       "walkthrough": [2],
       "lanes": ["windows", "unix"],
       "cases": [
-        "scripts/clone_smoke.py — smoke, clone-sync and clone-run, unavailable 3.0 pin then retry",
+        "scripts/clone_smoke.py — smoke, clone-sync and clone-run, withhold the locked 1.0 wheel then retry the same commit",
         "scripts/readme-smoke.ps1 — clone block and clean Git status (Windows)"
       ]
     },

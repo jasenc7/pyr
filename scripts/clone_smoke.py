@@ -74,11 +74,15 @@ def smoke(root, cli):
         # Checkout timestamps carry no dependency intent.
         os.utime(lock, (1_000_000, 1_000_000))
         if command == "sync":
-            lock.write_text("pyr-fixture==3.0\n")
-            run([*cli, command], clone, success=False)
+            archive = wheels / "pyr_fixture-1.0-py3-none-any.whl"
+            unavailable = root / archive.name
+            archive.rename(unavailable)
+            output = run([*cli, command], clone, success=False)
+            assert "failed to restore packages" in output, output
             assert not (clone / ".venv").exists()
-            lock.write_bytes(pinned)
-            os.utime(lock, (1_000_000, 1_000_000))
+            assert lock.read_bytes() == pinned
+            assert run(["git", "status", "--porcelain"], clone) == ""
+            unavailable.rename(archive)
         output = run([*cli, command], clone)
         if command == "run":
             assert output.splitlines()[-1] == "1.0", output

@@ -12,10 +12,12 @@ $InstallDir = Join-Path $PyrHome "bin"
 # tree, not under bin\ as on macOS and Linux (see managedPython in lib.ts).
 $PythonDir  = Join-Path $PyrHome "python"
 
-switch ($env:PROCESSOR_ARCHITECTURE) {
+# A 32-bit PowerShell process reports x86 even on a 64-bit Windows host.
+$nativeArch = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
+switch ($nativeArch) {
     "AMD64" { $target = "windows-x86_64" }
     "ARM64" { $target = "windows-aarch64" }
-    default { Write-Error "unsupported arch: $env:PROCESSOR_ARCHITECTURE"; exit 1 }
+    default { Write-Error "unsupported Windows architecture: $nativeArch (pyr requires x64 or ARM64 Windows)"; exit 1 }
 }
 
 # Windows PowerShell 5.1 does not always negotiate TLS 1.2 by default. Set it

@@ -87,18 +87,18 @@ from it fails the smoke test, so nothing is published.
 `<home>` is `$HOME` on macOS, Linux and WSL, and `%USERPROFILE%` on native Windows (`pyrHome()` and
 `userHome()` in `lib.ts`).
 
-| State                  | macOS, Linux, WSL                         | Native Windows                     | Created by               | Changed by                                                                  |
-| ---------------------- | ----------------------------------------- | ---------------------------------- | ------------------------ | --------------------------------------------------------------------------- |
-| CLI executable         | `$PYR_HOME/bin/pyr`                       | `$PYR_HOME\bin\pyr.exe`            | installer                | `pyr upgrade`, which replaces the running executable wherever it is         |
-| Replaced executable    | none                                      | `pyr.exe.old` next to `pyr.exe`    | `pyr upgrade` on Windows | deleted the next time `pyr` starts                                          |
-| Managed CPython        | `$PYR_HOME/python/` (`bin/python3`)       | `$PYR_HOME\python\` (`python.exe`) | first `pyr init`         | `pyr upgrade --python`                                                      |
-| Runtime version, build | `$PYR_HOME/python/.version`, `.build`     | same, under `$PYR_HOME\python\`    | CPython install          | CPython install                                                             |
-| CPython install lock   | `$PYR_HOME/.python-install-lock/`         | same, under `$PYR_HOME\`           | each CPython install     | removed when the install ends                                               |
-| CPython staging        | `$PYR_HOME/.python-install-*/`            | same, under `$PYR_HOME\`           | each CPython install     | removed when the install ends, unless a failed swap could not be undone     |
-| Project venv           | `<project>/.venv/` (`bin/`)               | `<project>\.venv\` (`Scripts\`)    | `pyr init`               | rebuilt by `pyr run/add/remove/sync` when the managed CPython version moves |
-| Venv runtime stamp     | `<project>/.venv/.pyr-python`             | `<project>\.venv\.pyr-python`      | `pyr init`, venv rebuild | venv rebuild                                                                |
-| Declared dependencies  | `pyproject.toml` `[project].dependencies` | same                               | `pyr init`               | `pyr add`, `pyr remove`, hand edits                                         |
-| Lock                   | `requirements.txt`                        | same                               | `pyr init` (empty)       | `pyr sync`, also run by `add`, `remove`, and `run` when the TOML is newer   |
+| State                  | macOS, Linux, WSL                         | Native Windows                     | Created by                     | Changed by                                                                  |
+| ---------------------- | ----------------------------------------- | ---------------------------------- | ------------------------------ | --------------------------------------------------------------------------- |
+| CLI executable         | `$PYR_HOME/bin/pyr`                       | `$PYR_HOME\bin\pyr.exe`            | installer                      | `pyr upgrade`, which replaces the running executable wherever it is         |
+| Replaced executable    | none                                      | `pyr.exe.old` next to `pyr.exe`    | `pyr upgrade` on Windows       | deleted the next time `pyr` starts                                          |
+| Managed CPython        | `$PYR_HOME/python/` (`bin/python3`)       | `$PYR_HOME\python\` (`python.exe`) | first venv creation or restore | `pyr upgrade --python`                                                      |
+| Runtime version, build | `$PYR_HOME/python/.version`, `.build`     | same, under `$PYR_HOME\python\`    | CPython install                | CPython install                                                             |
+| CPython install lock   | `$PYR_HOME/.python-install-lock/`         | same, under `$PYR_HOME\`           | each CPython install           | removed when the install ends                                               |
+| CPython staging        | `$PYR_HOME/.python-install-*/`            | same, under `$PYR_HOME\`           | each CPython install           | removed when the install ends, unless a failed swap could not be undone     |
+| Project venv           | `<project>/.venv/` (`bin/`)               | `<project>\.venv\` (`Scripts\`)    | `pyr init` or restore          | rebuilt by `pyr run/add/remove/sync` when the managed CPython version moves |
+| Venv runtime stamp     | `<project>/.venv/.pyr-python`             | `<project>\.venv\.pyr-python`      | `pyr init`, venv rebuild       | venv rebuild                                                                |
+| Declared dependencies  | `pyproject.toml` `[project].dependencies` | same                               | `pyr init`                     | `pyr add`, `pyr remove`, hand edits                                         |
+| Lock                   | `requirements.txt`                        | same                               | `pyr init` (empty)             | `pyr sync`, also run by `add`, `remove`, and `run` after declaration edits  |
 
 The CLI executable holds no project state. One managed CPython serves every project under the same
 `PYR_HOME`. Each project's `.venv` and its packages belong to that project alone.
@@ -109,5 +109,6 @@ The CLI executable holds no project state. One managed CPython serves every proj
   `pyr upgrade`.
 - `api.github.com/repos/astral-sh/python-build-standalone/releases/latest`, or
   `releases/tags/<build>` for an exact pin: managed CPython installs.
-- The package index pip is configured for: `pyr add`, `pyr remove`, `pyr sync`, venv rebuilds.
+- The package index pip is configured for: `pyr add`, `pyr remove`, `pyr sync`, venv restores and
+  rebuilds.
 - `pyrun.dev` serves the installer scripts only. The CLI never contacts it.

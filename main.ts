@@ -36,6 +36,7 @@ const COMMANDS: Command[] = [
     summary: "run app/main.py",
     usage: "pyr run [-- args...]\n\n" +
       "runs app/main.py in the project venv with PYTHONPATH=. .\n" +
+      "a missing .venv is restored from requirements.txt.\n" +
       "args after `--` are forwarded to python.",
     handler: (args) => run(args),
   },
@@ -60,7 +61,8 @@ const COMMANDS: Command[] = [
     name: "sync",
     summary: "reconcile venv + requirements.txt with pyproject.toml",
     usage: "pyr sync\n\n" +
-      "resolves [project].dependencies in pyproject.toml, installs/\n" +
+      "with no .venv, restores the committed requirements.txt.\n" +
+      "with an existing venv, resolves [project].dependencies, installs/\n" +
       "uninstalls to match, and writes a fully-pinned requirements.txt.",
     handler: (_args) => sync(),
   },

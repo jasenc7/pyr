@@ -23,12 +23,13 @@ rebuilt the next time `pyr run`, `add`, `remove` or `sync` runs in it.
 ### macOS and Linux
 
 ```sh
-curl -fsSL https://pyrun.dev/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/jasenc7/pyr/main/site/assets/install.sh | sh
 ```
 
 Installs the latest release's `pyr` into `$PYR_HOME/bin`. Needs `curl`, `unzip`, and `sha256sum` or
 `shasum`. It prints the `PATH` line for `$PYR_HOME/bin` and `$PYR_HOME/python/bin` if they are
-missing. The managed CPython is not installed here; the first `pyr init` downloads it.
+missing. The managed CPython is not installed here; creating or restoring the first venv downloads
+it.
 
 ### WSL
 
@@ -38,7 +39,7 @@ WSL is Linux. Run `install.sh` inside WSL. It installs a Linux executable under 
 ### Native Windows
 
 ```powershell
-irm https://pyrun.dev/install.ps1 | iex
+irm https://raw.githubusercontent.com/jasenc7/pyr/main/site/assets/install.ps1 | iex
 ```
 
 Installs `pyr.exe` into `$PYR_HOME\bin` (default `%USERPROFILE%\.pyr\bin`) and prints the command
@@ -54,9 +55,9 @@ WSL and native Windows each need their own install, runtime and project venvs.
   build and would replace each other's runtime.
 - Do not share a project `.venv` across the boundary. Windows venvs keep their interpreter in
   `.venv\Scripts\python.exe`, Linux venvs in `.venv/bin/python`, and both record their runtime
-  version in the same `.venv/.pyr-python` stamp. The other side either reports `no .venv found` or,
-  when the stamped version differs from its own runtime, deletes and rebuilds the whole `.venv`. Use
-  a separate checkout for each side.
+  version in the same `.venv/.pyr-python` stamp. The other side either reports a missing platform
+  interpreter or, when the stamped version differs from its own runtime, deletes and rebuilds the
+  whole `.venv`. Use a separate checkout for each side.
 
 ## Upgrade
 
@@ -108,11 +109,12 @@ explicit `pyr upgrade --python`.
 ### Project dependencies: `pyr add`, `pyr remove`, `pyr sync`
 
 `pyproject.toml` `[project].dependencies` is the declaration and `requirements.txt` is the
-generated, fully pinned lock. `pyr add` and `pyr remove` edit the declaration and then sync.
-`pyr sync` re-resolves the declaration with pip (`pip install --upgrade`), installs what it
-resolved, uninstalls packages nothing requires any more, and rewrites `requirements.txt`. If
+generated, fully pinned lock. `pyr add` and `pyr remove` edit the declaration and then sync. In an
+existing venv, `pyr sync` re-resolves the declaration with pip (`pip install --upgrade`), installs
+what it resolved, uninstalls packages nothing requires any more, and rewrites `requirements.txt`. If
 resolution fails, the existing lock is left untouched. `pyr run` syncs first when `pyproject.toml`
-is newer than `requirements.txt`.
+changes after a fresh restore. After a regular sync, Pyr uses the modification times of the two
+files.
 
 Because `pyr sync` re-resolves, it can move pins forward. Installing `requirements.txt` as written
 is what reproduces a committed lock (see [Restore a project `.venv`](#restore-a-project-venv)).
@@ -227,23 +229,12 @@ resume as they were. Projects stamped with another version rebuild on their next
 
 ### Restore a project `.venv`
 
-No Pyr command recreates a missing `.venv` in an existing project: `pyr run`, `add`, `remove` and
-`sync` stop with `no .venv found`, and `pyr init` refuses to overwrite a project. Recreate it the
-way Pyr's own rebuild does, from the managed runtime and the committed lock, in the project
-directory:
+From the cloned app directory, run `pyr sync` to recreate a missing `.venv` or `pyr run` to restore
+and launch in one step. Both require `app/main.py`, `pyproject.toml` and `requirements.txt`. Pyr
+bootstraps its managed interpreter if needed, installs the locked entries and checks their
+dependencies before marking the venv ready. Checkout timestamps do not trigger a second resolution.
+A failed install removes the newly created venv so you can fix the cause and retry.
 
-```sh
-"${PYR_HOME:-$HOME/.pyr}/python/bin/python3" -m venv .venv
-cp "${PYR_HOME:-$HOME/.pyr}/python/.version" .venv/.pyr-python
-.venv/bin/pip install -r requirements.txt
-```
-
-```powershell
-$pyrHome = if ($env:PYR_HOME) { $env:PYR_HOME } else { Join-Path $env:USERPROFILE '.pyr' }
-& "$pyrHome\python\python.exe" -m venv .venv
-Copy-Item "$pyrHome\python\.version" .venv\.pyr-python
-.venv\Scripts\pip.exe install -r requirements.txt
-```
-
-`pyproject.toml`, `requirements.txt` and `app/` are the project. `.venv` can always be derived from
-them and the managed runtime.
+If restoration was interrupted and no Pyr process is still running, move the incomplete `.venv`
+aside and retry. An existing venv from another platform also needs a separate checkout or to be
+moved aside. In an existing environment, explicit `pyr sync` resumes its usual update behavior.

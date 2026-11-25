@@ -272,8 +272,7 @@ export async function init(name?: string) {
 }
 
 export async function run(args: string[]) {
-  // Validate the entrypoint up front; ensureVenv's "no .venv" error is
-  // misleading if the user is in the wrong directory entirely.
+  // Check the entrypoint before making any changes to the environment.
   try {
     await Deno.stat("app/main.py");
   } catch (e) {
@@ -289,7 +288,7 @@ export async function run(args: string[]) {
 
   // Auto-sync if pyproject.toml has been edited since the lock was last
   // written (e.g., the user hand-edited [project].dependencies).
-  if (await pyprojectNewerThanLock()) {
+  if (await projectNeedsSync()) {
     await sync({ quiet: true });
   }
 
@@ -386,7 +385,7 @@ export async function sync(opts: SyncOptions = {}): Promise<void> {
     );
   }
 
-  await ensureVenv();
+  if (await ensureVenv() === "restored") return;
 
   const topDeps = declared.kind === "declared" ? declared.deps : [];
   const oldLock = await readLock();
@@ -470,6 +469,12 @@ export async function sync(opts: SyncOptions = {}): Promise<void> {
   // Step 4: re-freeze (we may have uninstalled) and write the lock.
   const finalFreeze = orphans.length > 0 ? await pipFreeze(pip) : freeze;
   await writeLock(finalFreeze);
+  // The newly written lock now supplies the normal auto-sync timestamp.
+  try {
+    await Deno.remove(declarationStamp);
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) throw error;
+  }
 
   // Step 5: summary.
   if (!opts.quiet) {
@@ -537,10 +542,22 @@ async function pipLeaves(pip: string): Promise<string[]> {
   return parsed.map((p) => canonicalizeName(p.name));
 }
 
-/** True when pyproject.toml has been modified more recently than
- *  requirements.txt (the pyr-managed lock). Used by `run` to auto-sync after
- *  a hand-edit. Returns false if either file is missing. */
-async function pyprojectNewerThanLock(): Promise<boolean> {
+// Git does not preserve file mtimes. Record the declaration accepted alongside
+// the lock so repeated runs of a fresh clone never upgrade its pins by accident.
+const declarationStamp = ".venv/.pyr-pyproject";
+
+async function declarationDigest(): Promise<string> {
+  return await sha256Hex(await Deno.readFile("pyproject.toml"));
+}
+
+async function projectNeedsSync(): Promise<boolean> {
+  try {
+    const recorded = await Deno.readTextFile(declarationStamp);
+    return recorded !== await declarationDigest();
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) throw error;
+  }
+  // Outside a fresh restore, keep the existing auto-sync behavior.
   try {
     const [pyp, lock] = await Promise.all([
       Deno.stat("pyproject.toml"),
@@ -1537,13 +1554,79 @@ async function stampVenv(dir: string) {
   }
 }
 
-async function ensureVenv() {
+const restoringMarker = ".venv/.pyr-restoring";
+
+async function restoreMissingVenv(v: VenvPaths) {
+  // Only adopt a scaffolded app with a committed declaration and lock. Check
+  // inputs before bootstrapping the runtime or creating anything in the project.
+  for (const path of ["app/main.py", "pyproject.toml", "requirements.txt"]) {
+    try {
+      if (!(await Deno.stat(path)).isFile) throw new Error(`${path} is not a file`);
+    } catch (error) {
+      if (!(error instanceof Deno.errors.NotFound)) throw error;
+      throw new Error(`cannot restore .venv: missing ${path}`);
+    }
+  }
+  const digest = await declarationDigest();
+  const python = await ensurePython();
+  // Venv entry points embed absolute paths. Build at the final path, with
+  // exclusive ownership and a marker until pip and the version stamps finish.
+  await Deno.mkdir(v.root);
+  try {
+    await Deno.writeTextFile(restoringMarker, "");
+    console.log("restoring .venv from requirements.txt...");
+    const create = await new Deno.Command(python, {
+      args: ["-m", "venv", v.root],
+      stderr: "inherit",
+    }).output();
+    if (!create.success) throw new Error("failed to create .venv");
+    const install = await new Deno.Command(v.python, {
+      args: ["-m", "pip", "install", "--no-deps", "-r", "requirements.txt"],
+      stdout: "inherit",
+      stderr: "inherit",
+    }).spawn().status;
+    if (!install.success) throw new Error("failed to restore packages from requirements.txt");
+    const check = await new Deno.Command(v.python, {
+      args: ["-m", "pip", "check"],
+      stdout: "inherit",
+      stderr: "inherit",
+    }).spawn().status;
+    if (!check.success) throw new Error("locked packages have unsatisfied dependencies");
+    await stampVenv(".");
+    await Deno.writeTextFile(declarationStamp, digest);
+    await Deno.remove(restoringMarker);
+  } catch (error) {
+    await Deno.remove(v.root, { recursive: true });
+    throw error;
+  }
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await Deno.lstat(path);
+    return true;
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) return false;
+    throw error;
+  }
+}
+
+async function ensureVenv(): Promise<"ready" | "restored"> {
   const v = venvPaths();
+  if (!await pathExists(v.root)) {
+    await restoreMissingVenv(v);
+    return "restored";
+  }
+  if (await pathExists(restoringMarker)) {
+    throw new Error(
+      "restore in progress or interrupted; if no pyr is running, move .venv aside and retry",
+    );
+  }
   try {
     await Deno.stat(v.python);
-  } catch {
-    console.error("no .venv found. run `pyr init` first.");
-    Deno.exit(1);
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) throw error;
+    throw new Error("existing .venv has no interpreter for this platform; move it aside and retry");
   }
 
   const stamped = await venvPythonVersion();
@@ -1595,6 +1678,7 @@ async function ensureVenv() {
 
     console.log("venv rebuilt");
   }
+  return "ready";
 }
 
 // --- upgrade ---

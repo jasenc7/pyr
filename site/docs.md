@@ -21,7 +21,7 @@ pyr upgrade --python 3.14.7+20260901  # install one exact upstream build
 ### macOS / Linux
 
 ```sh
-curl -fsSL https://pyrun.dev/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/jasenc7/pyr/main/site/assets/install.sh | sh
 ```
 
 The script drops `pyr` into `~/.pyr/bin/`. Add that to your `PATH` - the
@@ -36,7 +36,7 @@ executables and venv layouts are platform-specific.
 In PowerShell:
 
 ```powershell
-irm https://pyrun.dev/install.ps1 | iex
+irm https://raw.githubusercontent.com/jasenc7/pyr/main/site/assets/install.ps1 | iex
 ```
 
 This installs `pyr.exe` into `%USERPROFILE%\.pyr\bin\`. Add that directory to
@@ -82,9 +82,10 @@ dependencies = [       anyio==4.3.0
 
 `pyr add httpx` and `pyr remove httpx` both edit `pyproject.toml` then call
 `pyr sync` under the hood. `pyr sync` resolves the top-level deps via pip,
-prunes anything no longer needed, and rewrites the lock. `pyr run` auto-syncs if
-`pyproject.toml` is newer than the lock - so hand-edits to
-`[project].dependencies` followed by `pyr run` Just Work.
+prunes anything no longer needed, and rewrites the lock in an existing venv. In
+a fresh clone, `pyr sync` or `pyr run` first recreates the missing venv from the
+committed lock. Repeated runs keep those pins until the declaration changes. An
+explicit sync in an existing venv can move pins forward.
 
 ## Commands
 
@@ -94,7 +95,7 @@ prunes anything no longer needed, and rewrites the lock. `pyr run` auto-syncs if
 | `pyr run [-- args]`              | Run `app/main.py` in the venv with `PYTHONPATH=.`. Args after `--` go to python.      |
 | `pyr add <pkg>...`               | Add packages to `pyproject.toml [project].dependencies`, then sync.                   |
 | `pyr remove <pkg>...`            | Remove packages from `pyproject.toml`, then sync.                                     |
-| `pyr sync`                       | Reconcile the venv and lock with `pyproject.toml`. Idempotent.                        |
+| `pyr sync`                       | Restore a missing venv from the lock, or re-resolve an existing venv.                 |
 | `pyr upgrade`                    | Update the pyr binary from the latest GitHub release.                                 |
 | `pyr upgrade --python [VERSION]` | Update managed CPython, optionally pinning `X.Y.Z[+BUILD]`.                           |
 | `pyr help [cmd]`                 | Top-level usage, or per-command details.                                              |

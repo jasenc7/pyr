@@ -14,10 +14,14 @@ Six commands. One honest lockfile.
 
 ## **Installation**
 
+The canonical installer scripts live in `site/assets/` in `jasenc7/pyr`. The website serves copies
+at `pyrun.dev/install.sh` and `pyrun.dev/install.ps1`. Both installers fetch binaries from this
+repository’s GitHub Releases.
+
 ### macOS / Linux
 
 ```sh
-curl -fsSL https://pyrun.dev/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/jasenc7/pyr/main/site/assets/install.sh | sh
 ```
 
 The script installs `pyr` to `~/.pyr/bin/`. Add this to your `PATH`.
@@ -28,13 +32,18 @@ share `%USERPROFILE%\.pyr` or project venvs with the Windows executable.
 
 ### Windows
 
+On a 64-bit Intel or AMD PC, open PowerShell and run the following command.
+
 ```powershell
-irm https://pyrun.dev/install.ps1 | iex
+irm https://raw.githubusercontent.com/jasenc7/pyr/main/site/assets/install.ps1 | iex
 ```
 
 Installs `pyr.exe` to `%USERPROFILE%\.pyr\bin\`. Add this to your `PATH`. On Windows ARM64, the
 installer selects the native ARM64 ZIP when the latest release has one; older releases without that
 asset use the x86_64 ZIP under Windows emulation and print a warning.
+
+Run the PATH command printed by the installer, reopen PowerShell, then try `pyr init hello`,
+`cd hello` and `pyr run`. The app prints `hello world`. Native 32-bit Windows is unsupported.
 
 Git Bash is still native Windows. Run the PowerShell installer (not `install.sh`), then restart Git
 Bash so it inherits the updated user `PATH`. Native Pyr prefers `%USERPROFILE%` over Git Bash's
@@ -66,6 +75,11 @@ pyr upgrade --python 3.14.7+20260901  # Install one exact upstream CPython build
 ```
 
 ---
+
+With a CLI built after v0.1.2, clone a Pyr app and run `pyr run` in the project directory. When
+`.venv` is missing, Pyr restores the committed `requirements.txt` before starting the app. Use
+`pyr sync` for the same restore without launching. On an existing environment, explicit sync can
+update pins.
 
 ## **Why pyr?**
 

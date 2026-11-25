@@ -38,9 +38,7 @@ On a 64-bit Intel or AMD PC, open PowerShell and run the following command.
 irm https://raw.githubusercontent.com/jasenc7/pyr/main/site/assets/install.ps1 | iex
 ```
 
-Installs `pyr.exe` to `%USERPROFILE%\.pyr\bin\`. Add this to your `PATH`. On Windows ARM64, the
-installer selects the native ARM64 ZIP when the latest release has one; older releases without that
-asset use the x86_64 ZIP under Windows emulation and print a warning.
+Installs `pyr.exe` to `%USERPROFILE%\.pyr\bin\`. Add this to your `PATH`.
 
 Run the PATH command printed by the installer, reopen PowerShell, then try `pyr init hello`,
 `cd hello` and `pyr run`. The app prints `hello world`. Native 32-bit Windows is unsupported.
@@ -52,7 +50,7 @@ POSIX-looking `$HOME`; set `PYR_HOME` explicitly when a different Windows-native
 Every release publishes a `SHA256SUMS` file next to the zips. The installers resolve one release
 tag, verify the selected ZIP against that manifest, and only then install it; `pyr upgrade` and the
 managed CPython bootstrap apply the same fail-closed check. Release builds run on native GitHub
-hosted runners for all six supported platform and architecture combinations before publication.
+hosted runners for all five supported platform and architecture combinations before publication.
 
 The shipped executable is standalone: it neither uses nor modifies an existing Deno, fnm, Node, or
 npm installation. Its release compilation graph uses only local source and Deno/Node built-ins - no
@@ -60,26 +58,76 @@ JSR packages. The website has a separate build toolchain and is not embedded in 
 
 ---
 
-## **Quickstart**
+## Windows x64 walkthrough
 
-```sh
-pyr init myapp        # Scaffold a project
-cd myapp
-pyr run               # Run app/main.py
-pyr add httpx         # Add a dependency
-pyr remove httpx      # Remove a dependency
-pyr sync              # Reconcile venv + lock with pyproject.toml
-pyr upgrade           # Update pyr itself
-pyr upgrade --python  # Update the managed CPython
-pyr upgrade --python 3.14.7+20260901  # Install one exact upstream CPython build
+Use a fresh PowerShell session on an Intel/AMD x64 Windows PC with Git for Windows, an internet
+connection, and an unsynced temporary folder. The standalone CLI supplies Python. Git is used for
+the handoff in step 2. The clone feature requires a release containing this change; published v0.1.2
+predates it. CI exercises the candidate package in the same ZIP layout before release.
+[Product specification and verification matrix](SPEC.md).
+
+### 1. Install, scaffold and run
+
+Start anywhere in the fresh shell. Use a disposable Pyr home and a session-only PATH:
+
+<!-- walkthrough:install -->
+
+```powershell
+Set-Location $env:TEMP
+$work = New-Item -ItemType Directory ([guid]::NewGuid().ToString())
+Set-Location $work
+$env:PYR_HOME = Join-Path $work 'managed'
+irm https://raw.githubusercontent.com/jasenc7/pyr/main/site/assets/install.ps1 | iex
+$env:Path = "$env:PYR_HOME\bin;$env:Path"
+pyr --version
+pyr init hello
+Set-Location hello
+pyr run
+Test-Path "$env:PYR_HOME\python\python.exe"
+Test-Path ".venv\Scripts\python.exe"
 ```
 
----
+The installer identifies `pyr-windows-x86_64.zip`. Expect the release version, `hello world` from
+`app/main.py`, and `True` twice. The first app on a new machine downloads a managed CPython.
 
-With a CLI built after v0.1.2, clone a Pyr app and run `pyr run` in the project directory. When
-`.venv` is missing, Pyr restores the committed `requirements.txt` before starting the app. Use
-`pyr sync` for the same restore without launching. On an existing environment, explicit sync can
-update pins.
+### 2. Clone the sample, restore its dependency and run it twice
+
+Continue in the `hello` directory. Make the sample print the installed version of its dependency,
+commit the app locally, and clone it. The scaffold ignores `.venv`.
+
+<!-- walkthrough:clone -->
+
+```powershell
+pyr add "idna==3.10"
+'from importlib.metadata import version; print(version("idna"))' | Set-Content -Encoding ascii app/main.py
+git init -q
+git add .
+git -c user.name=Pyr -c user.email=pyr@example.invalid commit -qm sample
+Set-Location $work
+git clone --quiet hello copy
+Set-Location copy
+Test-Path .venv
+pyr run
+Get-Content requirements.txt
+pyr run
+git status --porcelain
+```
+
+Expect `False`, then a restore followed by `3.10`. The lock includes `idna==3.10`, the second run
+prints `3.10`, and Git status is empty. An explicit `pyr sync` in an existing venv re-resolves the
+declaration and can update pins. In a missing venv, sync consumes the committed pins. Editing
+`pyproject.toml` can also trigger a sync on the next run. `pyr upgrade` replaces the CLI.
+`pyr upgrade --python [X.Y.Z+BUILD]` changes the shared interpreter after checking the candidate.
+The exact-build and rollback procedure is in [operations](docs/operations.md).
+
+Clean up in the same disposable session and close PowerShell:
+
+<!-- walkthrough:cleanup -->
+
+```powershell
+Set-Location $env:TEMP
+Remove-Item -LiteralPath $work.FullName -Recurse -Force
+```
 
 ## **Why pyr?**
 

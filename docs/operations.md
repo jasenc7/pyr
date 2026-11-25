@@ -161,7 +161,7 @@ Native Windows (PowerShell):
 
 ```powershell
 $tag = 'vX.Y.Z'                       # the preceding release
-$asset = 'pyr-windows-x86_64.zip'     # or pyr-windows-aarch64.zip
+$asset = 'pyr-windows-x86_64.zip'
 $base = "https://github.com/jasenc7/pyr/releases/download/$tag"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12  # Windows PowerShell 5.1
 $tmp = Join-Path ([IO.Path]::GetTempPath()) ([Guid]::NewGuid())

@@ -1,0 +1,33 @@
+{
+  "specification": "SPEC.md",
+  "requirements": [
+    {
+      "id": "PYR-01",
+      "walkthrough": [1],
+      "lanes": ["windows"],
+      "cases": [
+        "scripts/windows-smoke.ps1 — package and verify x64 release ZIP",
+        "scripts/readme-smoke.ps1 — install block, version, hello world, managed and project paths"
+      ]
+    },
+    {
+      "id": "PYR-02",
+      "walkthrough": [2],
+      "lanes": ["windows", "unix"],
+      "cases": [
+        "scripts/clone_smoke.py — smoke, clone-sync and clone-run, unavailable 3.0 pin then retry",
+        "scripts/readme-smoke.ps1 — clone block and clean Git status (Windows)"
+      ]
+    },
+    {
+      "id": "PYR-03",
+      "walkthrough": [2],
+      "lanes": ["windows", "unix"],
+      "cases": [
+        "scripts/clone_smoke.py — smoke, edit manifest to require 2.0 after locked restore",
+        "python_install_test.ts — same CPython build uses one GET and no download",
+        "python_install_test.ts — restored interpreter runs an app after failed promotion"
+      ]
+    }
+  ]
+}

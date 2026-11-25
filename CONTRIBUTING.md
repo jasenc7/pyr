@@ -85,8 +85,6 @@ extracted executable. Windows and Ubuntu 24.04 in WSL should use separate checko
 deno compile -A --target aarch64-apple-darwin main.ts
 # Windows x64 (Intel/AMD)
 deno compile -A --target x86_64-pc-windows-msvc main.ts
-# Windows ARM64
-deno compile -A --target aarch64-pc-windows-msvc main.ts
 # Linux x86
 deno compile -A --target x86_64-unknown-linux-gnu main.ts
 # Linux ARM

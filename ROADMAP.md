@@ -7,13 +7,11 @@ the Python ecosystem’s needs.
 
 ### **1. Stability & Polish**
 
-- **Checksum Verification:** Enforce checksum verification in install scripts.
+- **Checksum Verification:** Shipped for release ZIPs and managed runtime downloads.
 
 ### **2. Platform Support**
 
-- **Windows ARM64:** Native Windows ARM64 binaries.
-  - _Status:_ Done. `deno compile` supports `aarch64-pc-windows-msvc`; CI builds
-    `pyr-windows-aarch64.zip` and smoke-tests it on a `windows-11-arm` runner.
+- Support standalone Windows x64 executables and native Intel/ARM64 builds on Linux and macOS.
 
 ---
 

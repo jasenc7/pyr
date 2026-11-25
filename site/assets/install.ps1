@@ -14,10 +14,8 @@ $PythonDir  = Join-Path $PyrHome "python"
 
 # A 32-bit PowerShell process reports x86 even on a 64-bit Windows host.
 $nativeArch = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
-switch ($nativeArch) {
-    "AMD64" { $target = "windows-x86_64" }
-    "ARM64" { $target = "windows-aarch64" }
-    default { Write-Error "unsupported Windows architecture: $nativeArch (pyr requires x64 or ARM64 Windows)"; exit 1 }
+if ($nativeArch -ne "AMD64") {
+    throw "pyr requires x64 Windows (Intel or AMD); detected $nativeArch"
 }
 
 # Windows PowerShell 5.1 does not always negotiate TLS 1.2 by default. Set it
@@ -30,23 +28,8 @@ $Tag = [string]$Release.tag_name
 if ($Tag -notmatch '^v[0-9A-Za-z._-]+$') {
     throw "invalid latest release tag"
 }
-$AssetName = "pyr-$target.zip"
+$AssetName = "pyr-windows-x86_64.zip"
 $asset = @($Release.assets | Where-Object { $_.name -eq $AssetName } | Select-Object -First 1)
-if ($asset.Count -eq 0 -and $target -eq "windows-aarch64") {
-    # Older releases predate the native ARM64 artifact. Windows on ARM can
-    # emulate the x86_64 binary, so keep the installer useful until a release
-    # carries the native asset. A release with the native asset always wins.
-    $fallbackTarget = "windows-x86_64"
-    $fallbackName = "pyr-$fallbackTarget.zip"
-    $fallbackAsset = @($Release.assets | Where-Object { $_.name -eq $fallbackName } | Select-Object -First 1)
-    if ($fallbackAsset.Count -eq 0) {
-        throw "latest release $Tag has neither $AssetName nor $fallbackName"
-    }
-    Write-Warning "latest release $Tag has no native Windows ARM64 asset; installing $fallbackName (Windows x86_64 emulation)"
-    $target = $fallbackTarget
-    $AssetName = $fallbackName
-    $asset = $fallbackAsset
-}
 if ($asset.Count -eq 0) {
     throw "latest release $Tag has no $AssetName asset"
 }

@@ -56,6 +56,7 @@ def smoke(root, cli):
     wheel(wheels, "1.0")
     run([*cli, "init", "original"])
     project = root / "original"
+    assert run([*cli, "run"], project).splitlines()[-1] == "hello world"
     run([*cli, "add", "pyr-fixture>=1"], project)
     (project / "app/main.py").write_text("import pyr_fixture\nprint(pyr_fixture.version)\n")
     run(["git", "init", "-q"], project)

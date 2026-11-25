@@ -41,17 +41,14 @@ irm https://raw.githubusercontent.com/jasenc7/pyr/main/site/assets/install.ps1 |
 
 This installs `pyr.exe` into `%USERPROFILE%\.pyr\bin\`. Add that directory to
 your user `PATH` if it isn't already - the installer prints the exact command.
-On Windows ARM64, it uses the native ARM64 ZIP when the latest release has one;
-older releases without that asset fall back to the x86_64 ZIP under Windows
-emulation and print a warning.
+Windows releases target x64 Intel and AMD PCs.
 
 Git Bash counts as native Windows. Use `install.ps1` from PowerShell rather than
 piping `install.sh` to Bash, then restart Git Bash to pick up the Windows user
 `PATH`. Native Pyr prefers `%USERPROFILE%` over Git Bash's `$HOME`; use an
 explicit Windows-native `PYR_HOME` to override it.
 
-Or, manually: download the latest `pyr-windows-x86_64.zip` (or
-`pyr-windows-aarch64.zip` on ARM64) from
+Or, manually: download the latest `pyr-windows-x86_64.zip` from
 [releases](https://github.com/jasenc7/pyr/releases/latest), unzip it, and put
 `pyr.exe` somewhere on your `PATH`.
 

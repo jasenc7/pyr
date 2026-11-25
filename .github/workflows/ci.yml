@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with:
           deno-version: v2.9.8
@@ -28,14 +29,40 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with:
           deno-version: v2.9.8
       - name: Build and exercise the native Windows package
         shell: powershell
         run: ./scripts/windows-smoke.ps1
+      - name: Exercise managed runtime rollback
+        run: deno test -A python_install_test.ts
+      - name: Record Windows acceptance evidence
+        run: python scripts/record_evidence.py windows "${{ runner.temp }}/pyr-package/pyr-windows-x86_64.zip"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pyr-windows-x86_64-preview
           path: ${{ runner.temp }}/pyr-package/pyr-windows-x86_64.zip
           if-no-files-found: error
+
+  unix-package:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.9.8
+      - name: Exercise packaged app handoff and runtime rollback
+        run: |
+          deno compile -A --output "$RUNNER_TEMP/pyr" main.ts
+          python3 scripts/clone_smoke.py "$RUNNER_TEMP/pyr"
+          deno test -A python_install_test.ts
+          python3 scripts/record_evidence.py unix "$RUNNER_TEMP/pyr"

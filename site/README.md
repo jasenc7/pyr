@@ -47,10 +47,7 @@ Recorded in this repository:
 
 - The public origin is `https://pyrun.dev` (root `README.md`,
   `static/sitemap.xml`, `static/robots.txt`, metadata in `routes/_app.tsx`).
-- After each release, the `verify-installers` job in
-  `.github/workflows/release.yml` runs the live `https://pyrun.dev/install.sh`
-  and `https://pyrun.dev/install.ps1`. It reads from the site; it does not
-  deploy it.
+- Release verification uses the canonical installer scripts from the Git tag.
 
 Not recorded in this repository, and needed before a site change:
 
